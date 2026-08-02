@@ -1,6 +1,27 @@
 # AI Next Model Wise Frontend
 
-Frontend for AI model recommender.
+React + Vite frontend for model recommender app.
+
+## What it does
+
+- Login/logout flow
+- Show user model list
+- Add/remove models
+- Run prompt recommendation
+- Pass context details with prompt
+- Show recommended model, confidence, summary
+- Show history and ranking views
+- Show usage stats
+- Toast errors and basic UI state
+
+## Tech
+
+- React
+- Redux Toolkit
+- React Router
+- React Toastify
+- Bootstrap
+- Vite
 
 ## Run
 
@@ -15,9 +36,14 @@ npm run dev
 npm run build
 ```
 
-## Notes
+## Structure
 
-- React + Vite
-- Redux state
-- Bootstrap UI
-- Frontend only; backend lives in `../backend`
+- `src/App.jsx` — main app shell and routing
+- `src/components/` — UI pieces
+- `src/lib/api.js` — API helper
+- `src/store.js` — Redux store
+- `src/styles.css` — app styles
+
+## Backend
+
+Frontend talks to backend API in `../backend`.
