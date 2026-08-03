@@ -157,6 +157,7 @@ function App() {
   };
   const updateContext = (value) => {
     setContext(value);
+    if (value === "No additional context") setContextDetails("");
     setResult(null);
   };
   const updateContextDetails = (value) => {
@@ -180,7 +181,6 @@ function App() {
     api("/api/v1/models")
       .then((data) => {
         setModels(data.models.map((model) => model.displayName));
-        setRankedModels(normalizeRanking(data.models));
       })
       .catch(() => {});
     api("/api/v1/usage")
@@ -189,6 +189,17 @@ function App() {
     api("/api/v1/recommendations?limit=100")
       .then((data) => {
         const items = data.items || [];
+        const latestRanked = items.find((item) =>
+          Array.isArray(item.result?.ranking) && item.result.ranking.length
+        );
+        setRankedModels(
+          latestRanked
+            ? normalizeRanking(latestRanked.result.ranking, {
+                id: latestRanked.result.recommendedModelId,
+                name: latestRanked.result.recommendedModelName,
+              })
+            : []
+        );
         setHistoryTotals({
           tokens: items.reduce(
             (total, item) => total + (item.result?.estimatedInputTokens || 0),
@@ -219,12 +230,8 @@ function App() {
         }),
       });
       setModels((current) => [...current, data.model.displayName]);
-      setRankedModels((current) =>
-        normalizeRanking([
-          ...current,
-          { ...data.model, rank: current.length + 1 },
-        ])
-      );
+      setRankedModels([]);
+      setResult(null);
       setModelModalOpen(false);
     } catch (error) {
       setErrorMessage(error.message);
@@ -237,13 +244,8 @@ function App() {
       if (!model) throw new Error("Model not found.");
       await api(`/api/v1/models/${model.id}`, { method: "DELETE" });
       setModels((current) => current.filter((item) => item !== name));
-      setRankedModels((current) =>
-        normalizeRanking(
-          current
-            .filter((item) => item.displayName !== name)
-            .map((item, index) => ({ ...item, rank: index + 1 }))
-        )
-      );
+      setRankedModels([]);
+      setResult(null);
     } catch (error) {
       setErrorMessage(error.message);
     }
@@ -268,8 +270,12 @@ function App() {
           candidateModelIds: active.map((model) => model.id),
           context: {
             hasContext: context !== "No additional context",
-            contextType: context.toLowerCase().replaceAll(" ", "_"),
-            contextDetails,
+            contextType:
+              context === "No additional context"
+                ? "none"
+                : context.toLowerCase().replaceAll(" ", "_"),
+            contextDetails:
+              context === "No additional context" ? "" : contextDetails,
           },
         }),
       });
