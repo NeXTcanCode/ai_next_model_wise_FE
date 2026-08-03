@@ -7,6 +7,7 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
   const [name, setName] = useState("");
   const [provider, setProvider] = useState("Other");
   const [price, setPrice] = useState("");
+  const [openRouterModelId, setOpenRouterModelId] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [pricingError, setPricingError] = useState("");
 
@@ -19,6 +20,7 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
       });
       if (data.pricing) {
         setPrice(String(data.pricing.inputPricePerMillion));
+        setOpenRouterModelId(data.pricing.modelId);
         return data.pricing;
       }
       setPricingError("Price unavailable.");
@@ -55,10 +57,10 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
     if (!price) {
       const pricing = await lookupPricing(name.trim());
       if (pricing)
-        return onSubmit(name.trim(), provider, pricing.inputPricePerMillion);
+        return onSubmit(name.trim(), provider, pricing.inputPricePerMillion, pricing.modelId);
       return;
     }
-    onSubmit(name.trim(), provider, price);
+    onSubmit(name.trim(), provider, price, openRouterModelId);
   };
 
   return (
@@ -94,6 +96,7 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
                   onClick={() => {
                     setName(suggestion.displayName);
                     setProvider(suggestion.providerName);
+                    setOpenRouterModelId(suggestion.openRouterModelId);
                     setSuggestions([]);
                     lookupPricing(suggestion.displayName);
                   }}

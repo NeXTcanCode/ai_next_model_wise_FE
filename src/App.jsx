@@ -182,7 +182,7 @@ function App() {
     if (errorMessage) toast.error(errorMessage);
   }, [errorMessage]);
 
-  const addModel = async (name, providerName, price) => {
+  const addModel = async (name, providerName, price, openRouterModelId) => {
     if (!name?.trim()) return;
     try {
       const data = await api("/api/v1/models", {
@@ -191,6 +191,7 @@ function App() {
           displayName: name.trim(),
           providerName,
           inputPricePerMillion: price ? Number(price) : null,
+          openRouterModelId,
         }),
       });
       setModels((current) => [...current, data.model.displayName]);
@@ -241,7 +242,9 @@ function App() {
         summary: data.summary,
         inputTokens: data.estimatedInputTokens,
         inputCost: data.estimatedInputCostUsd,
+        reasons: data.reasons,
       });
+      setRankedModels(data.ranking || []);
       setHistoryTotals((current) => ({
         tokens: current.tokens + (data.estimatedInputTokens || 0),
         cost: current.cost + (data.estimatedInputCostUsd || 0),

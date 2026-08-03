@@ -18,12 +18,14 @@ export default function RankingView({ models = [] }) {
             >
               <div>
                 <b>
-                  {i + 1}. {model.displayName || model.name || String(model)}
+                  {model.rank || i + 1}. {model.displayName || model.name || String(model)}
                 </b>
-                <small>{model.providerName || ""}</small>
+                <small>{(model.reasons || []).join(" · ") || model.providerName || ""}</small>
               </div>
               <span className="confidence-pill">
-                {model.inputPricePerMillion != null
+                {model.score != null
+                  ? `${Number(model.score).toFixed(1)} score`
+                  : model.inputPricePerMillion != null
                   ? `$${Number(model.inputPricePerMillion).toFixed(2)}/1M`
                   : "No price"}
               </span>
