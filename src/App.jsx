@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -13,6 +13,10 @@ import Recommend from "./components/Recommend";
 import Sidebar from "./components/Sidebar";
 import StatusSummary from "./components/StatusSummary";
 import { api } from "./lib/api";
+import {
+  normalizeRanking,
+  recommendationResult,
+} from "./lib/recommendations";
 import { clearUser, setUser } from "./store";
 
 function Shell({
@@ -41,6 +45,7 @@ function Shell({
   addModel,
   removeModel,
   recommend,
+  isRecommending,
 }) {
   return (
     <div className="app-shell">
@@ -74,6 +79,8 @@ function Shell({
                 ? "Find your best model"
                 : view === "history"
                 ? "Recommendation history"
+                : view === "ranking"
+                ? "Model ranking"
                 : "My models"}
             </h1>
           </div>
@@ -96,6 +103,7 @@ function Shell({
             contextDetails={contextDetails}
             setContextDetails={setContextDetails}
             recommend={recommend}
+            isRecommending={isRecommending}
             result={result}
             models={models}
             onAddModel={() => setModelModalOpen(true)}
@@ -127,7 +135,9 @@ function Shell({
 function App() {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
-  const [view, setView] = useState("recommend");
+  const [view, setView] = useState(() =>
+    window.location.pathname === "/ranking" ? "ranking" : "recommend"
+  );
   const [models, setModels] = useState([]);
   const [rankedModels, setRankedModels] = useState([]);
   const [prompt, setPrompt] = useState("");
@@ -139,6 +149,20 @@ function App() {
   const [modelModalOpen, setModelModalOpen] = useState(false);
   const [usage, setUsage] = useState({ count: 0, limit: 100, resetAt: null });
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
+  const [isRecommending, setIsRecommending] = useState(false);
+  const recommendInFlight = useRef(false);
+  const updatePrompt = (value) => {
+    setPrompt(value);
+    setResult(null);
+  };
+  const updateContext = (value) => {
+    setContext(value);
+    setResult(null);
+  };
+  const updateContextDetails = (value) => {
+    setContextDetails(value);
+    setResult(null);
+  };
 
   useEffect(() => {
     const handleUnauthorized = () => dispatch(clearUser());
@@ -156,7 +180,7 @@ function App() {
     api("/api/v1/models")
       .then((data) => {
         setModels(data.models.map((model) => model.displayName));
-        setRankedModels(data.models);
+        setRankedModels(normalizeRanking(data.models));
       })
       .catch(() => {});
     api("/api/v1/usage")
@@ -179,11 +203,6 @@ function App() {
       .catch(() => {});
   }, [user]);
   useEffect(() => {
-    if (!result) return;
-    const timer = setTimeout(() => setResult(null), 5000);
-    return () => clearTimeout(timer);
-  }, [result]);
-  useEffect(() => {
     if (errorMessage) toast.error(errorMessage);
   }, [errorMessage]);
 
@@ -200,7 +219,12 @@ function App() {
         }),
       });
       setModels((current) => [...current, data.model.displayName]);
-      setRankedModels((current) => [...current, data.model]);
+      setRankedModels((current) =>
+        normalizeRanking([
+          ...current,
+          { ...data.model, rank: current.length + 1 },
+        ])
+      );
       setModelModalOpen(false);
     } catch (error) {
       setErrorMessage(error.message);
@@ -214,15 +238,23 @@ function App() {
       await api(`/api/v1/models/${model.id}`, { method: "DELETE" });
       setModels((current) => current.filter((item) => item !== name));
       setRankedModels((current) =>
-        current.filter((item) => item.displayName !== name)
+        normalizeRanking(
+          current
+            .filter((item) => item.displayName !== name)
+            .map((item, index) => ({ ...item, rank: index + 1 }))
+        )
       );
     } catch (error) {
       setErrorMessage(error.message);
     }
   };
   const recommend = async () => {
+    if (recommendInFlight.current) return;
     if (prompt.length < 3 || prompt.length > 20000)
       return toast.error("Prompt must be 3–20,000 characters.");
+    recommendInFlight.current = true;
+    setIsRecommending(true);
+    setResult(null);
     setErrorMessage("");
     try {
       const available = await api("/api/v1/models");
@@ -241,22 +273,31 @@ function App() {
           },
         }),
       });
-      setResult({
-        model: data.recommendedModel.name,
-        confidence: Math.round(data.confidence * 100),
-        summary: data.summary,
-        inputTokens: data.estimatedInputTokens,
-        inputCost: data.estimatedInputCostUsd,
-        reasons: data.reasons,
+      setResult(recommendationResult(data));
+      setRankedModels((current) => {
+        if (Array.isArray(data.ranking) && data.ranking.length) {
+          return normalizeRanking(data.ranking, data.recommendedModel);
+        }
+
+        const fallback = current.length ? current : active;
+        return normalizeRanking(fallback, data.recommendedModel);
       });
-      setRankedModels(data.ranking || []);
       setHistoryTotals((current) => ({
         tokens: current.tokens + (data.estimatedInputTokens || 0),
         cost: current.cost + (data.estimatedInputCostUsd || 0),
       }));
-      setUsage((current) => ({ ...current, count: current.count + 1 }));
+      setUsage((current) => ({
+        ...current,
+        count: current.count + 1,
+        resetAt:
+          current.resetAt ||
+          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      }));
     } catch (error) {
       setErrorMessage(error.message);
+    } finally {
+      recommendInFlight.current = false;
+      setIsRecommending(false);
     }
   };
 
@@ -275,7 +316,7 @@ function App() {
           <Shell
             user={user}
             dispatch={dispatch}
-            view="ranking"
+            view={view}
             setView={setView}
             menu={menu}
             setMenu={setMenu}
@@ -284,11 +325,11 @@ function App() {
             models={models}
             rankedModels={rankedModels}
             prompt={prompt}
-            setPrompt={setPrompt}
+            setPrompt={updatePrompt}
             context={context}
-            setContext={setContext}
+            setContext={updateContext}
             contextDetails={contextDetails}
-            setContextDetails={setContextDetails}
+            setContextDetails={updateContextDetails}
             result={result}
             setResult={setResult}
             modelModalOpen={modelModalOpen}
@@ -298,6 +339,7 @@ function App() {
             addModel={addModel}
             removeModel={removeModel}
             recommend={recommend}
+            isRecommending={isRecommending}
           />
         } />
         <Route path="*" element={
@@ -313,11 +355,11 @@ function App() {
             models={models}
             rankedModels={rankedModels}
             prompt={prompt}
-            setPrompt={setPrompt}
+            setPrompt={updatePrompt}
             context={context}
-            setContext={setContext}
+            setContext={updateContext}
             contextDetails={contextDetails}
-            setContextDetails={setContextDetails}
+            setContextDetails={updateContextDetails}
             result={result}
             setResult={setResult}
             modelModalOpen={modelModalOpen}
@@ -327,6 +369,7 @@ function App() {
             addModel={addModel}
             removeModel={removeModel}
             recommend={recommend}
+            isRecommending={isRecommending}
           />
         } />
       </Routes>

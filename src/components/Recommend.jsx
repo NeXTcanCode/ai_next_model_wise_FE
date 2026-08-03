@@ -5,6 +5,7 @@ import {
   FileCode2,
   Image,
   Layers3,
+  LoaderCircle,
   Plus,
   Sparkles,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export function FormPanel({
   contextDetails,
   setContextDetails,
   recommend,
+  isRecommending,
 }) {
   return (
     <div className="form-panel">
@@ -56,16 +58,17 @@ export function FormPanel({
       <textarea
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
+        disabled={isRecommending}
         onKeyDown={(e) => {
           if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
             e.preventDefault();
-            recommend();
+            if (!isRecommending) recommend();
           }
         }}
         placeholder="e.g. Review this authentication flow and identify why expired tokens aren't redirecting users..."
       />
       <div className="char-count">{prompt.length} / 20,000</div>
-      {/* <label className="field-label context-label">
+      <label className="field-label context-label">
         CONTEXT <span>Optional</span>
       </label>
       <div className="context-options">
@@ -83,27 +86,43 @@ export function FormPanel({
               key={c}
               className={context === c ? "selected" : ""}
               onClick={() => setContext(c)}
+              disabled={isRecommending}
             >
               <Icon size={15} /> {c}
               {context === c && <Check size={14} />}
             </button>
           );
         })}
-      </div> */}
-      {/* ponytail: future context-details parsing hook. Keep raw text here only until we know what fields matter. */}
-      {/* <label className="field-label context-label">
+      </div>
+      <label className="field-label context-label">
         CONTEXT DETAILS <span>Optional</span>
       </label>
       <textarea
+        className="context-details"
         value={contextDetails}
         onChange={(e) => setContextDetails(e.target.value)}
+        disabled={isRecommending}
+        maxLength={300}
         placeholder="e.g. 3 files, 1 screenshot, about 500 lines"
-      /> */}
-      <button className="primary" onClick={recommend} disabled={!prompt.trim()}>
-        Recommend a model <ArrowRight size={17} />
+      />
+      <button
+        className="primary"
+        onClick={recommend}
+        disabled={!prompt.trim() || isRecommending}
+        aria-busy={isRecommending}
+      >
+        {isRecommending ? (
+          <>
+            Comparing models <LoaderCircle className="loading-spinner" size={17} />
+          </>
+        ) : (
+          <>
+            Recommend a model <ArrowRight size={17} />
+          </>
+        )}
       </button>
       <p className="privacy">
-        <span>⌁</span> Your prompt is never saved.
+        <span>⌁</span> Your full prompt is not saved. A redacted preview and hash are stored in history.
       </p>
     </div>
   );

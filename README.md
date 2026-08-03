@@ -9,8 +9,8 @@ React + Vite frontend for model recommender app.
 - Add/remove models
 - Run prompt recommendation
 - Pass context details with prompt
-- Show recommended model, confidence, summary
-- Show history and ranking views
+- Show recommended model, derived confidence, assessment, reasons, and runner-up
+- Show the complete scored ranking with per-prompt cost estimates
 - Show usage stats
 - Toast errors and basic UI state
 
@@ -41,6 +41,7 @@ npm run build
 - `src/App.jsx` — main app shell and routing
 - `src/components/` — UI pieces
 - `src/lib/api.js` — API helper
+- `src/lib/recommendations.js` — recommendation response normalization
 - `src/store.js` — Redux store
 - `src/styles.css` — app styles
 
