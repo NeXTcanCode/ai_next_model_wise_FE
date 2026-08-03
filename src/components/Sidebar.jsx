@@ -80,9 +80,12 @@ export default function Sidebar({
           </div>
           <small>
             {usage.resetAt
-              ? `Resets in ${Math.max(
-                  0,
-                  Math.ceil((new Date(usage.resetAt) - Date.now()) / 86400000)
+              ? `Resets in ${Math.min(
+                  7,
+                  Math.max(
+                    0,
+                    Math.ceil((new Date(usage.resetAt) - Date.now()) / 86400000)
+                  )
                 )} days`
               : "Starts with your first message"}
           </small>

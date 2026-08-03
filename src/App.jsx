@@ -15,8 +15,6 @@ import StatusSummary from "./components/StatusSummary";
 import { api } from "./lib/api";
 import { clearUser, setUser } from "./store";
 
-const starters = ["Claude Sonnet 4", "GPT-4.1", "Gemini 2.5 Pro"];
-
 function Shell({
   user,
   dispatch,
@@ -130,7 +128,7 @@ function App() {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const [view, setView] = useState("recommend");
-  const [models, setModels] = useState(starters);
+  const [models, setModels] = useState([]);
   const [rankedModels, setRankedModels] = useState([]);
   const [prompt, setPrompt] = useState("");
   const [context, setContext] = useState("No additional context");
