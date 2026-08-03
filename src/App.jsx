@@ -141,6 +141,11 @@ function App() {
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
 
   useEffect(() => {
+    const handleUnauthorized = () => dispatch(clearUser());
+    window.addEventListener("modelwise:unauthorized", handleUnauthorized);
+    return () => window.removeEventListener("modelwise:unauthorized", handleUnauthorized);
+  }, [dispatch]);
+  useEffect(() => {
     if (!localStorage.getItem("modelwise_session")) return;
     api("/api/v1/auth/me")
       .then((data) => dispatch(setUser(data.user)))

@@ -24,7 +24,11 @@ export default function RankingView({ models = [] }) {
               </div>
               <span className="confidence-pill">
                 {model.score != null
-                  ? `${Number(model.score).toFixed(1)} score`
+                  ? `${Number(model.score).toFixed(1)} fit${
+                      model.estimatedInputCostUsd != null
+                        ? ` · $${Number(model.estimatedInputCostUsd).toFixed(6)}`
+                        : ""
+                    }`
                   : model.inputPricePerMillion != null
                   ? `$${Number(model.inputPricePerMillion).toFixed(2)}/1M`
                   : "No price"}

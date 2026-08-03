@@ -11,6 +11,10 @@ export const api = async (path, options = {}) => {
     },
   });
   const body = await response.json().catch(() => ({}));
+  if (response.status === 401) {
+    localStorage.removeItem("modelwise_session");
+    window.dispatchEvent(new Event("modelwise:unauthorized"));
+  }
   if (!response.ok) throw new Error(body.error?.message || "Request failed");
   return body.data;
 };
