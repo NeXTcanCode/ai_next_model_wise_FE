@@ -76,7 +76,9 @@ export default function ResultCard({ result }) {
       </div>
       <div className="confidence">
         <span>Confidence</span>
-        <b>{result.confidence != null ? `${result.confidence}%` : "Unavailable"}</b>
+        <b>
+          {result.confidence != null ? `${result.confidence}%` : "Unavailable"}
+        </b>
       </div>
     </div>
   );

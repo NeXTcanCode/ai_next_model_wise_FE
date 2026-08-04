@@ -113,7 +113,8 @@ export function FormPanel({
       >
         {isRecommending ? (
           <>
-            Comparing models <LoaderCircle className="loading-spinner" size={17} />
+            Comparing models{" "}
+            <LoaderCircle className="loading-spinner" size={17} />
           </>
         ) : (
           <>
@@ -122,7 +123,7 @@ export function FormPanel({
         )}
       </button>
       <p className="privacy">
-        <span>⌁</span> Your full prompt is not saved. A redacted preview and hash are stored in history.
+        <span>⌁</span> Your prompt is not saved.
       </p>
     </div>
   );
