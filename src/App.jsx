@@ -108,6 +108,7 @@ function Shell({
             models={models}
             onAddModel={() => setModelModalOpen(true)}
             onManage={() => setView("models")}
+            onCloseResult={() => setResult(null)}
           />
         ) : view === "history" ? (
           <HistoryView />

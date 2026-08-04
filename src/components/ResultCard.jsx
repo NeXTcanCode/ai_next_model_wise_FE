@@ -1,12 +1,12 @@
 import React from "react";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, X } from "lucide-react";
 
 const humanize = (value) =>
   String(value || "")
     .replaceAll("_", " ")
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 
-export default function ResultCard({ result }) {
+export default function ResultCard({ result, onClose }) {
   const assessment = result.assessment || {};
   const assessmentItems = [
     ["Task", assessment.taskType || assessment.taskDomain],
@@ -17,6 +17,9 @@ export default function ResultCard({ result }) {
 
   return (
     <div className="result-card">
+      <button className="result-close" onClick={onClose} aria-label="Close recommendation">
+        <X size={16} aria-hidden />
+      </button>
       <span className="result-kicker">RECOMMENDATION</span>
       <h3>{result.model}</h3>
       <p>

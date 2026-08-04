@@ -149,7 +149,7 @@ main {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 header {
   height: 110px;
@@ -238,6 +238,8 @@ h1 {
   grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr);
   gap: 24px;
   min-height: 0;
+  height: calc(100% - 38px);
+  overflow: hidden;
 }
 .form-panel,
 .models-card,
@@ -247,6 +249,13 @@ h1 {
   border: 1px solid #e9e6f0;
   border-radius: 14px;
   box-shadow: 0 4px 20px #33265d08;
+}
+.form-panel,
+.side-column {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c9c2e8 transparent;
 }
 .form-panel {
   padding: 27px 30px;
@@ -490,6 +499,27 @@ textarea:focus {
 }
 .result-card {
   border-left: 3px solid #7464e5;
+  position: relative;
+}
+.result-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid #e7e2f2;
+  border-radius: 50%;
+  background: #fff;
+  color: #817a99;
+  cursor: pointer;
+}
+.result-close:hover {
+  color: #6758d2;
+  border-color: #b9aff0;
 }
 .result-card h3 {
   font: 600 20px "Space Grotesk";
@@ -739,6 +769,9 @@ textarea:focus {
     min-height: 100vh;
     overflow: visible;
   }
+  main {
+    overflow: visible;
+  }
   .sidebar {
     position: fixed;
     z-index: 5;
@@ -769,6 +802,12 @@ textarea:focus {
   .content-grid {
     grid-template-columns: 1fr;
     margin-top: 20px;
+    height: auto;
+    overflow: visible;
+  }
+  .form-panel,
+  .side-column {
+    overflow: visible;
   }
   .form-panel {
     padding: 22px 18px;

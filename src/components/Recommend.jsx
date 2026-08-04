@@ -129,12 +129,12 @@ export function FormPanel({
   );
 }
 
-export function SideColumn({ result, models, onAddModel, onManage }) {
+export function SideColumn({ result, models, onAddModel, onManage, onCloseResult }) {
   return (
     <div className="side-column">
       <ModelsCard models={models} onAddModel={onAddModel} onManage={onManage} />
       <TipCard />
-      {result && <ResultCard result={result} />}
+      {result && <ResultCard result={result} onClose={onCloseResult} />}
     </div>
   );
 }
