@@ -236,6 +236,7 @@ h1 {
   padding: 0 5% 24px;
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.7fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: 24px;
   min-height: 0;
   height: calc(100% - 38px);
@@ -253,6 +254,7 @@ h1 {
 .form-panel,
 .side-column {
   min-height: 0;
+  height: 100%;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c9c2e8 transparent;
@@ -801,12 +803,14 @@ textarea:focus {
   }
   .content-grid {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
     margin-top: 20px;
     height: auto;
     overflow: visible;
   }
   .form-panel,
   .side-column {
+    height: auto;
     overflow: visible;
   }
   .form-panel {
