@@ -151,6 +151,7 @@ function App() {
   const [usage, setUsage] = useState({ count: 0, limit: 100, resetAt: null });
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
   const [isRecommending, setIsRecommending] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(Boolean(localStorage.getItem("modelwise_session")));
   const recommendInFlight = useRef(false);
   const updatePrompt = (value) => {
     setPrompt(value);
@@ -175,7 +176,8 @@ function App() {
     if (!localStorage.getItem("modelwise_session")) return;
     api("/api/v1/auth/me")
       .then((data) => dispatch(setUser(data.user)))
-      .catch(() => localStorage.removeItem("modelwise_session"));
+      .catch(() => localStorage.removeItem("modelwise_session"))
+      .finally(() => setCheckingSession(false));
   }, []);
   useEffect(() => {
     if (!user) return;
@@ -214,10 +216,6 @@ function App() {
       })
       .catch(() => {});
   }, [user]);
-  useEffect(() => {
-    if (errorMessage) toast.error(errorMessage);
-  }, [errorMessage]);
-
   const addModel = async (name, providerName, price, openRouterModelId) => {
     if (!name?.trim()) return;
     try {
@@ -248,7 +246,7 @@ function App() {
       setRankedModels([]);
       setResult(null);
     } catch (error) {
-      setErrorMessage(error.message);
+      toast.error(error.message);
     }
   };
   const recommend = async () => {
@@ -301,12 +299,14 @@ function App() {
           new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       }));
     } catch (error) {
-      setErrorMessage(error.message);
+      toast.error(error.message);
     } finally {
       recommendInFlight.current = false;
       setIsRecommending(false);
     }
   };
+
+  if (checkingSession) return null;
 
   if (!user)
     return (
