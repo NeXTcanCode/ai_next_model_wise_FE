@@ -1033,6 +1033,7 @@ textarea:focus {
   letter-spacing: 0.08em;
 }
 .modal-card form input,
+.provider-browser input,
 .modal-card select {
   width: 100%;
   min-height: 48px;
@@ -1045,6 +1046,7 @@ textarea:focus {
   font: 15px "DM Sans";
 }
 .modal-card form input:focus,
+.provider-browser input:focus,
 .modal-card select:focus {
   border-color: #6b58df;
   box-shadow: 0 0 0 3px rgb(107 88 223 / 16%);
