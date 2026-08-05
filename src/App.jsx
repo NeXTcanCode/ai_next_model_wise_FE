@@ -216,7 +216,7 @@ function App() {
       })
       .catch(() => {});
   }, [user]);
-  const addModel = async (name, providerName, price, openRouterModelId) => {
+  const addModel = async (name, providerName, price, openRouterModelId, outputPrice) => {
     if (!name?.trim()) return;
     try {
       const data = await api("/api/v1/models", {
@@ -225,6 +225,7 @@ function App() {
           displayName: name.trim(),
           providerName,
           inputPricePerMillion: price ? Number(price) : null,
+          outputPricePerMillion: outputPrice ? Number(outputPrice) : null,
           openRouterModelId,
         }),
       });

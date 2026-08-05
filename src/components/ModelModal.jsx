@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Modal from "react-modal";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
@@ -10,6 +10,25 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
   const [openRouterModelId, setOpenRouterModelId] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
   const [pricingError, setPricingError] = useState("");
+  const [tab, setTab] = useState("manual");
+  const [catalog, setCatalog] = useState([]);
+  const [providerQuery, setProviderQuery] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState("");
+  const [selectedModels, setSelectedModels] = useState([]);
+  const [catalogLoading, setCatalogLoading] = useState(false);
+
+  const providers = useMemo(() => [...new Set(catalog.map((model) => model.providerName))].sort(), [catalog]);
+  const providerSuggestions = providers.filter((provider) => provider.toLowerCase().includes(providerQuery.toLowerCase())).slice(0, 8);
+  const providerModels = catalog.filter((model) => model.providerName === selectedProvider && model.displayName.toLowerCase().includes(providerQuery.toLowerCase()));
+
+  useEffect(() => {
+    if (tab !== "provider" || catalog.length) return;
+    setCatalogLoading(true);
+    api("/api/v1/models/catalog")
+      .then((data) => setCatalog(data.models || []))
+      .catch((error) => setPricingError(error.message))
+      .finally(() => setCatalogLoading(false));
+  }, [tab, catalog.length]);
 
   const lookupPricing = async (modelName) => {
     setPricingError("");
@@ -63,6 +82,17 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
     onSubmit(name.trim(), provider, price, openRouterModelId);
   };
 
+  const addSelected = () => {
+    selectedModels.forEach((model) => onSubmit(
+      model.displayName,
+      model.providerName,
+      model.inputPricePerMillion,
+      model.openRouterModelId,
+      model.outputPricePerMillion
+    ));
+    setSelectedModels([]);
+  };
+
   return (
     <Modal
       isOpen={isOpen}
@@ -77,6 +107,25 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
       <span className="eyebrow">MODEL LIBRARY / SETUP</span>
       <h2>Choose a model</h2>
       <p>Add a model to your shortlist.</p>
+      <div className="modal-tabs" role="tablist">
+        <button type="button" className={tab === "manual" ? "active" : ""} onClick={() => setTab("manual")}>Add manually</button>
+        <button type="button" className={tab === "provider" ? "active" : ""} onClick={() => setTab("provider")}>Browse providers</button>
+      </div>
+      {tab === "provider" ? (
+        <div className="provider-browser">
+          <div className="modal-section">
+            <label htmlFor="provider-name">PROVIDER</label>
+            <input id="provider-name" value={providerQuery} onChange={(event) => setProviderQuery(event.target.value)} placeholder="Choose a provider" />
+            {!selectedProvider && providerQuery && <div className="model-suggestions">{providerSuggestions.map((provider) => <button type="button" key={provider} onClick={() => { setSelectedProvider(provider); setProviderQuery(provider); }}>{provider}</button>)}</div>}
+          </div>
+          {selectedProvider && <>
+            <div className="provider-heading"><b>{selectedProvider} models</b><button type="button" onClick={() => { setSelectedProvider(""); setProviderQuery(""); }}>Change</button></div>
+            {catalogLoading ? <p>Loading models…</p> : <div className="provider-model-list">{providerModels.map((model) => { const checked = selectedModels.some((item) => item.openRouterModelId === model.openRouterModelId); return <label className="provider-model" key={model.openRouterModelId}><input type="checkbox" checked={checked} onChange={() => setSelectedModels((current) => checked ? current.filter((item) => item.openRouterModelId !== model.openRouterModelId) : [...current, model])} /><span><b>{model.displayName}</b><small>${model.inputPricePerMillion?.toFixed(2) ?? "—"} input / ${model.outputPricePerMillion?.toFixed(2) ?? "—"} output per 1M tokens</small></span></label>; })}</div>}
+          </>}
+          {!selectedProvider && !catalogLoading && !providerQuery && <p>Type a provider name to see available options.</p>}
+          <div className="modal-actions"><button type="button" className="secondary" onClick={onClose}>Cancel</button><button type="button" className="primary" disabled={!selectedModels.length} onClick={addSelected}>Add selected models <ArrowRight size={16} /></button></div>
+        </div>
+      ) : (
       <form onSubmit={submit}>
         <div className="modal-section">
           <label htmlFor="model-name">MODEL NAME</label>
@@ -133,7 +182,7 @@ export default function ModelModal({ isOpen, onClose, onSubmit, error }) {
             Add to my models <ArrowRight size={16} />
           </button>
         </div>
-      </form>
+      </form>)}
     </Modal>
   );
 }
