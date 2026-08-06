@@ -1051,6 +1051,19 @@ textarea:focus {
   border-color: #6b58df;
   box-shadow: 0 0 0 3px rgb(107 88 223 / 16%);
 }
+.modal-card .provider-model input[type="checkbox"] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 3px 0 0;
+  padding: 0;
+  accent-color: #6b58df;
+}
+.provider-model > span {
+  min-width: 0;
+}
 .modal-note {
   display: flex;
   gap: 10px;
