@@ -5,6 +5,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./styles.css";
 import Auth from "./components/Auth";
+import AIMatchmaker from "./components/AIMatchmaker";
 import HistoryView from "./components/HistoryView";
 import ModelModal from "./components/ModelModal";
 import Models from "./components/Models";
@@ -79,9 +80,11 @@ function Shell({
                 ? "Find your best model"
                 : view === "history"
                 ? "Recommendation history"
-                : view === "ranking"
-                ? "Model ranking"
-                : "My models"}
+              : view === "ranking"
+              ? "Model ranking"
+              : view === "bot"
+              ? "NeXT AI"
+              : "My models"}
             </h1>
           </div>
           <div className="header-actions">
@@ -94,7 +97,9 @@ function Shell({
             </button>
           </div>
         </header>
-        {view === "recommend" ? (
+        {view === "bot" ? (
+          <AIMatchmaker />
+        ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}
             setPrompt={setPrompt}

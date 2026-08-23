@@ -30,12 +30,8 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         <span className="eyebrow">
           {register ? "CREATE YOUR WORKSPACE" : "WELCOME BACK"}
         </span>
-        <h1>{register ? "Start choosing smarter." : "Welcome back."}</h1>
-        <p>
-          {register
-            ? "Set up your personal model workspace in a minute."
-            : "Sign in to see which model fits your next task."}
-        </p>
+        <h1>Not Every Prompt Needs a Flagship Model.</h1>
+        <p>Find the right AI model for every task.</p>
         {register && (
           <label>
             Name

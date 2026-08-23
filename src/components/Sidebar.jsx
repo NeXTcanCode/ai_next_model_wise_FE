@@ -1,5 +1,6 @@
 import React from "react";
 import {
+  Bot,
   History,
   Home,
   LogOut,
@@ -23,6 +24,7 @@ export default function Sidebar({
     ["history", History, "History"],
     ["models", Settings2, "My models"],
     ["ranking", Trophy, "Ranking"],
+    ["bot", Bot, "NeXT AI"],
   ];
 
   return (

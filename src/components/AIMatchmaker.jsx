@@ -1,0 +1,267 @@
+import React, { useEffect, useRef, useState } from "react";
+import {
+  ArrowUp,
+  Bot,
+  ChevronDown,
+  Paperclip,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { api } from "../lib/api";
+
+export default function AIMatchmaker() {
+  const [message, setMessage] = useState("");
+  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+  const [files, setFiles] = useState([]);
+  const [models, setModels] = useState([]);
+  const [selectedModel, setSelectedModel] = useState("");
+  const [isSelectingModel, setIsSelectingModel] = useState(false);
+  const [selectionMessage, setSelectionMessage] = useState("");
+  const [response, setResponse] = useState("");
+  const [isResponding, setIsResponding] = useState(false);
+  const messageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    api("/api/v1/models")
+      .then((data) => {
+        const availableModels = (data.models || []).filter(
+          (model) => model.isActive !== false
+        );
+        setModels(availableModels);
+        setSelectedModel((current) => current || availableModels[0]?.id || "");
+      })
+      .catch(() => setModels([]));
+  }, []);
+
+  useEffect(() => {
+    const input = messageInputRef.current;
+    if (!input) return;
+
+    input.style.height = "auto";
+    input.style.height = `${input.scrollHeight}px`;
+
+    // Once the composer becomes taller than the comfortable viewport area,
+    // keep the bottom controls reachable while the user continues typing or pasting.
+    if (input.scrollHeight > 240) {
+      const scrollContainer = input.closest("main");
+      requestAnimationFrame(() => {
+        scrollContainer?.scrollTo({
+          top: scrollContainer.scrollHeight,
+          behavior: "auto",
+        });
+      });
+    }
+  }, [message]);
+
+  useEffect(() => {
+    if (!message.trim()) return undefined;
+    const timer = window.setTimeout(() => recommendAndSelectModel(), 5000);
+    return () => window.clearTimeout(timer);
+  }, [message]);
+
+  const recommendAndSelectModel = async () => {
+    if (!message.trim() || isSelectingModel) return null;
+    setIsSelectingModel(true);
+    setSelectionMessage("Choosing the best model…");
+    try {
+      const data = await api("/api/v1/models");
+      const activeModels = (data.models || []).filter((model) => model.isActive !== false);
+      if (!activeModels.length) throw new Error("No active models are available.");
+      const recommendation = await api("/api/v1/recommendations", {
+        method: "POST",
+        body: JSON.stringify({
+          prompt: message,
+          candidateModelIds: activeModels.map((model) => model.id),
+          context: { hasContext: false, contextType: "none", contextDetails: "" },
+        }),
+      });
+      const recommendedId = recommendation.recommendedModelId || recommendation.recommendedModel?.id;
+      const recommendedModel = activeModels.find((model) => model.id === recommendedId);
+      if (recommendedModel) {
+        setSelectedModel(recommendedModel.id);
+        setSelectionMessage(`${recommendedModel.displayName} selected`);
+      }
+      return recommendedModel || null;
+    } catch (error) {
+      setSelectionMessage(error.message || "Could not choose a model.");
+      return null;
+    } finally {
+      setIsSelectingModel(false);
+    }
+  };
+
+  const handleSend = async (event) => {
+    event.preventDefault();
+    if (!message.trim() || isSelectingModel) return;
+    const model = await recommendAndSelectModel();
+    if (!model) return;
+    setIsResponding(true);
+    setSelectionMessage(`${model.displayName} selected. Getting your response…`);
+    try {
+      const data = await api("/api/v1/chat", {
+        method: "POST",
+        body: JSON.stringify({ prompt: message }),
+      });
+      setResponse(data.response || "No response was returned.");
+      setSelectionMessage(`${model.displayName} selected · Served by ${data.provider}`);
+    } catch (error) {
+      setSelectionMessage(error.message || "Could not get a response.");
+    } finally {
+      setIsResponding(false);
+    }
+  };
+
+  const openFilePicker = () => {
+    fileInputRef.current?.click();
+    setIsAttachmentMenuOpen(false);
+  };
+
+  const handleFiles = (event) => {
+    setFiles((current) => [
+      ...current,
+      ...Array.from(event.target.files || []),
+    ]);
+    event.target.value = "";
+  };
+
+  return (
+    <section className="ai_match_maker">
+      <div className="ai_match_maker__conversation">
+        {response && (
+          <article className="ai_match_maker__response">
+            <p>{response}</p>
+            <small>Served by OpenRouter Free Models Router</small>
+          </article>
+        )}
+        <div className="ai_match_maker__intro">
+          <div className="ai_match_maker__avatar">
+            <Bot size={22} strokeWidth={1.8} />
+          </div>
+        </div>
+
+        <div
+          className="ai_match_maker__suggestions"
+          aria-label="Suggested prompts"
+        >
+          <button
+            type="button"
+            onClick={() =>
+              setMessage("Help me choose a model for a coding task")
+            }
+          >
+            <Sparkles size={16} />
+            <span>Choose a model for coding</span>
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setMessage("I need a model to analyze a long document")
+            }
+          >
+            <Sparkles size={16} />
+            <span>Analyze a long document</span>
+          </button>
+        </div>
+      </div>
+
+      <form
+        className="ai_match_maker__composer"
+        onSubmit={handleSend}
+      >
+        {files.length > 0 && (
+          <div
+            className="ai_match_maker__attachments"
+            aria-label="Attached files"
+          >
+            {files.map((file, index) => (
+              <span
+                className="ai_match_maker__attachment"
+                key={`${file.name}-${index}`}
+              >
+                <Paperclip size={14} />
+                <span>{file.name}</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiles((current) =>
+                      current.filter((_, fileIndex) => fileIndex !== index)
+                    )
+                  }
+                  aria-label={`Remove ${file.name}`}
+                >
+                  <X size={13} />
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+        <textarea
+          ref={messageInputRef}
+          value={message}
+          onChange={(event) => setMessage(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+            }
+          }}
+          placeholder="Message NeXT AI"
+          rows={1}
+          aria-label="Message NeXT AI"
+        />
+        <input
+          ref={fileInputRef}
+          className="ai_match_maker__file-input"
+          type="file"
+          multiple
+          onChange={handleFiles}
+          aria-hidden="true"
+        />
+        <div className="ai_match_maker__composer-actions">
+          {/* <button type="button" aria-label="Open attachment menu" onClick={() => setIsAttachmentMenuOpen((open) => !open)} aria-expanded={isAttachmentMenuOpen}>
+            <Plus size={18} />
+          </button> */}
+          <button
+            type="button"
+            aria-label="Attach file"
+            onClick={openFilePicker}
+          >
+            <Paperclip size={17} />
+          </button>
+          <label className="ai_match_maker__model-picker">
+            <select
+              value={selectedModel}
+              onChange={(event) => setSelectedModel(event.target.value)}
+              aria-label="Select AI model"
+            >
+              {!models.length && <option value="">No models available</option>}
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.displayName}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={16} aria-hidden="true" />
+          </label>
+          <button
+            className="ai_match_maker__send"
+            type="submit"
+            disabled={!message.trim() || isSelectingModel || isResponding}
+            aria-label="Send message"
+          >
+            <ArrowUp size={17} />
+          </button>
+        </div>
+        {isAttachmentMenuOpen && (
+          <div className="ai_match_maker__attachment-menu">
+            <button type="button" onClick={openFilePicker}>
+              <Paperclip size={16} /> Upload files
+            </button>
+          </div>
+        )}
+        <small>{selectionMessage || "NeXT AI can make mistakes. Check important information."}</small>
+      </form>
+    </section>
+  );
+}
