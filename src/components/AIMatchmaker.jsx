@@ -20,8 +20,14 @@ export default function AIMatchmaker() {
   const [selectionMessage, setSelectionMessage] = useState("");
   const [response, setResponse] = useState("");
   const [isResponding, setIsResponding] = useState(false);
+  const [submittedPrompt, setSubmittedPrompt] = useState("");
   const messageInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const selectedModelRef = useRef("");
+
+  useEffect(() => {
+    selectedModelRef.current = selectedModel;
+  }, [selectedModel]);
 
   useEffect(() => {
     api("/api/v1/models")
@@ -61,25 +67,38 @@ export default function AIMatchmaker() {
     return () => window.clearTimeout(timer);
   }, [message]);
 
-  const recommendAndSelectModel = async () => {
-    if (!message.trim() || isSelectingModel) return null;
+  const recommendAndSelectModel = async (prompt = message) => {
+    const promptToRecommend = prompt.trim();
+    if (!promptToRecommend || isSelectingModel) return null;
     setIsSelectingModel(true);
     setSelectionMessage("Choosing the best model…");
     try {
       const data = await api("/api/v1/models");
-      const activeModels = (data.models || []).filter((model) => model.isActive !== false);
-      if (!activeModels.length) throw new Error("No active models are available.");
+      const activeModels = (data.models || []).filter(
+        (model) => model.isActive !== false
+      );
+      if (!activeModels.length)
+        throw new Error("No active models are available.");
       const recommendation = await api("/api/v1/recommendations", {
         method: "POST",
         body: JSON.stringify({
-          prompt: message,
+          prompt: promptToRecommend,
           candidateModelIds: activeModels.map((model) => model.id),
-          context: { hasContext: false, contextType: "none", contextDetails: "" },
+          context: {
+            hasContext: false,
+            contextType: "none",
+            contextDetails: "",
+          },
         }),
       });
-      const recommendedId = recommendation.recommendedModelId || recommendation.recommendedModel?.id;
-      const recommendedModel = activeModels.find((model) => model.id === recommendedId);
+      const recommendedId =
+        recommendation.recommendedModelId ||
+        recommendation.recommendedModel?.id;
+      const recommendedModel = activeModels.find(
+        (model) => model.id === recommendedId
+      );
       if (recommendedModel) {
+        selectedModelRef.current = recommendedModel.id;
         setSelectedModel(recommendedModel.id);
         setSelectionMessage(`${recommendedModel.displayName} selected`);
       }
@@ -94,18 +113,26 @@ export default function AIMatchmaker() {
 
   const handleSend = async (event) => {
     event.preventDefault();
-    if (!message.trim() || isSelectingModel) return;
-    const model = await recommendAndSelectModel();
-    if (!model) return;
+    const promptToSend = message.trim();
+    if (!promptToSend || isResponding) return;
+
+    setSubmittedPrompt(promptToSend);
+    setMessage("");
+    setResponse("");
     setIsResponding(true);
-    setSelectionMessage(`${model.displayName} selected. Getting your response…`);
+    setSelectionMessage("Getting your response…");
+    if (!isSelectingModel) recommendAndSelectModel(promptToSend);
     try {
       const data = await api("/api/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt: message }),
+        body: JSON.stringify({ prompt: promptToSend }),
       });
       setResponse(data.response || "No response was returned.");
-      setSelectionMessage(`${model.displayName} selected · Served by ${data.provider}`);
+      // setSelectionMessage(`Response from ${data.provider}`);
+      const selectedModelName =
+        models.find((model) => model.id === selectedModelRef.current)
+          ?.displayName || "selected model";
+      setSelectionMessage(`Recommended model: ${selectedModelName}`);
     } catch (error) {
       setSelectionMessage(error.message || "Could not get a response.");
     } finally {
@@ -129,47 +156,67 @@ export default function AIMatchmaker() {
   return (
     <section className="ai_match_maker">
       <div className="ai_match_maker__conversation">
+        {submittedPrompt && (
+          <div className="ai_match_maker__user-message">{submittedPrompt}</div>
+        )}
+        {isResponding && (
+          <div
+            className="ai_match_maker__thinking"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="ai_match_maker__thinking-mark">
+              <Bot size={16} />
+            </span>
+            <span>NeXT is thinking</span>
+            <span className="ai_match_maker__thinking-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          </div>
+        )}
         {response && (
           <article className="ai_match_maker__response">
+            <div className="ai_match_maker__response-identity">
+              <span><Bot size={15} /></span>
+              <b>NeXT AI</b>
+            </div>
             <p>{response}</p>
-            <small>Served by OpenRouter Free Models Router</small>
           </article>
         )}
-        <div className="ai_match_maker__intro">
-          <div className="ai_match_maker__avatar">
-            <Bot size={22} strokeWidth={1.8} />
-          </div>
-        </div>
+        {/* <div className="ai_match_maker__intro">
+            <div className="ai_match_maker__avatar">
+              <Bot size={22} strokeWidth={1.8} />
+            </div>
+          </div> */}
 
-        <div
-          className="ai_match_maker__suggestions"
-          aria-label="Suggested prompts"
-        >
-          <button
-            type="button"
-            onClick={() =>
-              setMessage("Help me choose a model for a coding task")
-            }
+        {/* <div
+            className="ai_match_maker__suggestions"
+            aria-label="Suggested prompts"
           >
-            <Sparkles size={16} />
-            <span>Choose a model for coding</span>
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              setMessage("I need a model to analyze a long document")
-            }
-          >
-            <Sparkles size={16} />
-            <span>Analyze a long document</span>
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() =>
+                setMessage("Help me choose a model for a coding task")
+              }
+            >
+              <Sparkles size={16} />
+              <span>Choose a model for coding</span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setMessage("I need a model to analyze a long document")
+              }
+            >
+              <Sparkles size={16} />
+              <span>Analyze a long document</span>
+            </button>
+          </div> */}
       </div>
 
-      <form
-        className="ai_match_maker__composer"
-        onSubmit={handleSend}
-      >
+      <form className="ai_match_maker__composer" onSubmit={handleSend}>
         {files.length > 0 && (
           <div
             className="ai_match_maker__attachments"
@@ -204,6 +251,7 @@ export default function AIMatchmaker() {
           onKeyDown={(event) => {
             if (event.key === "Enter" && !event.shiftKey) {
               event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
             }
           }}
           placeholder="Message NeXT AI"
@@ -220,8 +268,8 @@ export default function AIMatchmaker() {
         />
         <div className="ai_match_maker__composer-actions">
           {/* <button type="button" aria-label="Open attachment menu" onClick={() => setIsAttachmentMenuOpen((open) => !open)} aria-expanded={isAttachmentMenuOpen}>
-            <Plus size={18} />
-          </button> */}
+              <Plus size={18} />
+            </button> */}
           <button
             type="button"
             aria-label="Attach file"
@@ -247,7 +295,7 @@ export default function AIMatchmaker() {
           <button
             className="ai_match_maker__send"
             type="submit"
-            disabled={!message.trim() || isSelectingModel || isResponding}
+            disabled={!message.trim() || isResponding}
             aria-label="Send message"
           >
             <ArrowUp size={17} />
@@ -260,7 +308,10 @@ export default function AIMatchmaker() {
             </button>
           </div>
         )}
-        <small>{selectionMessage || "NeXT AI can make mistakes. Check important information."}</small>
+        <small>
+          {selectionMessage ||
+            "NeXT AI can make mistakes. Check important information."}
+        </small>
       </form>
     </section>
   );
