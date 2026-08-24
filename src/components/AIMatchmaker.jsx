@@ -58,7 +58,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     // Once the composer becomes taller than the comfortable viewport area,
     // keep the bottom controls reachable while the user continues typing or pasting.
     if (input.scrollHeight > 240) {
-      const scrollContainer = input.closest("main");
+      const scrollContainer = conversationRef.current;
       requestAnimationFrame(() => {
         scrollContainer?.scrollTo({
           top: scrollContainer.scrollHeight,
