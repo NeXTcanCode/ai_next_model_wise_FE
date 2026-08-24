@@ -66,7 +66,15 @@ export default function Sidebar({
         ))}
       </nav>
       <div className="sidebar-bottom">
-        <div className={`usage ${usage.percent >= 90 ? "usage-critical" : usage.percent >= 70 ? "usage-warning" : ""}`}>
+        <div
+          className={`usage ${
+            usage.percent >= 90
+              ? "usage-critical"
+              : usage.percent >= 70
+              ? "usage-warning"
+              : ""
+          }`}
+        >
           <div>
             <span>Weekly usage</span>
             <b>{usage.percent || 0}% used</b>
@@ -86,10 +94,12 @@ export default function Sidebar({
                     0,
                     Math.ceil((new Date(usage.resetAt) - Date.now()) / 86400000)
                   )
-                )} days`
-              : "Starts with your first response"}
+                )} days `
+              : "No usage yet"}
           </small>
-          <small className="usage-note">Longer prompts and responses use more.</small>
+          <small className="usage-note">
+            Longer prompts and responses use more.
+          </small>
         </div>
         <button className="nav-item" onClick={onLogout}>
           <LogOut size={17} /> Sign out

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 
-export default function AIMatchmaker({ onUsageRefresh }) {
+export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [message, setMessage] = useState("");
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
   const [files, setFiles] = useState([]);
@@ -19,13 +19,23 @@ export default function AIMatchmaker({ onUsageRefresh }) {
   const [responseMode, setResponseMode] = useState(() => localStorage.getItem("next_ai_response_mode") || "standard");
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [selectionMessage, setSelectionMessage] = useState("");
-  const [response, setResponse] = useState("");
+  const [messages, setMessages] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
-  const [submittedPrompt, setSubmittedPrompt] = useState("");
   const messageInputRef = useRef(null);
+  const conversationEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
+  const hour = new Date().getHours();
+  const firstName = String(userName || "").trim().split(/\s+/)[0];
+  const timeGreeting =
+    hour >= 5 && hour < 12
+      ? "Good morning"
+      : hour >= 12 && hour < 17
+      ? "Good afternoon"
+      : hour >= 17 && hour < 22
+      ? "Good evening"
+      : "Up late";
 
   useEffect(() => {
     selectedModelRef.current = selectedModel;
@@ -62,6 +72,13 @@ export default function AIMatchmaker({ onUsageRefresh }) {
       });
     }
   }, [message]);
+
+  useEffect(() => {
+    conversationEndRef.current?.scrollIntoView({
+      behavior: messages.length > 1 ? "smooth" : "auto",
+      block: "end",
+    });
+  }, [messages, isResponding]);
 
   useEffect(() => {
     if (!message.trim()) return undefined;
@@ -122,18 +139,36 @@ export default function AIMatchmaker({ onUsageRefresh }) {
     const promptToSend = message.trim();
     if (!promptToSend || isResponding) return;
 
-    setSubmittedPrompt(promptToSend);
+    const userMessage = {
+      id: `user-${Date.now()}`,
+      role: "user",
+      content: promptToSend,
+    };
+    const conversationToSend = [...messages, userMessage]
+      .filter((chatMessage) => !chatMessage.isError)
+      .map(({ role, content }) => ({ role, content }));
+    setMessages((current) => [...current, userMessage]);
     setMessage("");
-    setResponse("");
     setIsResponding(true);
     setSelectionMessage("Getting your response…");
     if (!isSelectingModel) recommendAndSelectModel(promptToSend);
     try {
       const data = await api("/api/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt: promptToSend, responseMode }),
+        body: JSON.stringify({
+          prompt: promptToSend,
+          messages: conversationToSend,
+          responseMode,
+        }),
       });
-      setResponse(data.response || "No response was returned.");
+      setMessages((current) => [
+        ...current,
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.response || "No response was returned.",
+        },
+      ]);
       onUsageRefresh?.();
       // setSelectionMessage(`Response from ${data.provider}`);
       const selectedModelName =
@@ -142,6 +177,15 @@ export default function AIMatchmaker({ onUsageRefresh }) {
       setSelectionMessage(`Recommended model: ${selectedModelName}`);
     } catch (error) {
       setSelectionMessage(error.message || "Could not get a response.");
+      setMessages((current) => [
+        ...current,
+        {
+          id: `error-${Date.now()}`,
+          role: "assistant",
+          content: error.message || "Could not get a response.",
+          isError: true,
+        },
+      ]);
     } finally {
       setIsResponding(false);
     }
@@ -163,8 +207,38 @@ export default function AIMatchmaker({ onUsageRefresh }) {
   return (
     <section className="ai_match_maker">
       <div className="ai_match_maker__conversation">
-        {submittedPrompt && (
-          <div className="ai_match_maker__user-message">{submittedPrompt}</div>
+        {!messages.length && !isResponding && (
+          <div className="ai_match_maker__welcome">
+            <div className="ai_match_maker__welcome-title">
+              <span><Sparkles size={24} /></span>
+              <h2>{timeGreeting}{firstName ? `, ${firstName}` : ""}</h2>
+            </div>
+            <p>Ask a question, explore an idea, or build something new.</p>
+            <div className="ai_match_maker__welcome-prompts">
+              <button type="button" onClick={() => setMessage("Review my code and suggest improvements")}>Review code</button>
+              <button type="button" onClick={() => setMessage("Explain a difficult concept in simple terms")}>Explain a concept</button>
+              <button type="button" onClick={() => setMessage("Help me analyze this text")}>Analyze text</button>
+              <button type="button" onClick={() => setMessage("Help me write something compelling")}>Write something</button>
+            </div>
+          </div>
+        )}
+        {messages.map((chatMessage) =>
+          chatMessage.role === "user" ? (
+            <div className="ai_match_maker__user-message" key={chatMessage.id}>
+              {chatMessage.content}
+            </div>
+          ) : (
+            <article
+              className={`ai_match_maker__response${chatMessage.isError ? " ai_match_maker__response--error" : ""}`}
+              key={chatMessage.id}
+            >
+              <div className="ai_match_maker__response-identity">
+                <span><Bot size={15} /></span>
+                <b>NeXT AI</b>
+              </div>
+              <p>{chatMessage.content}</p>
+            </article>
+          )
         )}
         {isResponding && (
           <div
@@ -183,15 +257,7 @@ export default function AIMatchmaker({ onUsageRefresh }) {
             </span>
           </div>
         )}
-        {response && (
-          <article className="ai_match_maker__response">
-            <div className="ai_match_maker__response-identity">
-              <span><Bot size={15} /></span>
-              <b>NeXT AI</b>
-            </div>
-            <p>{response}</p>
-          </article>
-        )}
+        <div ref={conversationEndRef} aria-hidden="true" />
         {/* <div className="ai_match_maker__intro">
             <div className="ai_match_maker__avatar">
               <Bot size={22} strokeWidth={1.8} />

@@ -99,7 +99,7 @@ function Shell({
           </div>
         </header>
         {view === "bot" ? (
-          <AIMatchmaker onUsageRefresh={onUsageRefresh} />
+          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} />
         ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}

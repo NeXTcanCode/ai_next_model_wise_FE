@@ -134,6 +134,23 @@ nav {
   align-items: center;
   justify-content: center;
 }
+.ai_match_maker__conversation:has(.ai_match_maker__user-message) {
+  justify-content: flex-start;
+  padding-top: 24px;
+}
+.ai_match_maker__welcome { width: min(680px, 100%); margin: auto; text-align: center; }
+.ai_match_maker__welcome-title { display: flex; align-items: center; justify-content: center; gap: 13px; color: #28233a; }
+.ai_match_maker__welcome-title > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: #6d5ce7; color: #fff; transform: rotate(-6deg); }
+.ai_match_maker__welcome h2 { margin: 0; font: 500 clamp(38px, 5vw, 58px)/1.05 Georgia, "Times New Roman", serif; letter-spacing: -0.04em; }
+.ai_match_maker__welcome > p { margin-top: 14px; color: #8b8596; font-size: 14px; }
+.ai_match_maker__welcome-prompts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 520px; margin: 30px auto 0; }
+.ai_match_maker__welcome-prompts button { padding: 13px 15px; border: 1px solid #e5e1eb; border-radius: 13px; background: #fff; color: #5d5768; font: 500 13px "DM Sans"; text-align: left; cursor: pointer; transition: border-color .18s, background .18s, transform .18s; }
+.ai_match_maker__welcome-prompts button:hover { border-color: #cfc7f4; background: #faf9ff; transform: translateY(-1px); }
+@media (max-width: 600px) {
+  .ai_match_maker__welcome-prompts { grid-template-columns: 1fr; max-width: 320px; margin-top: 24px; }
+  .ai_match_maker__welcome h2 { font-size: 40px; }
+  .ai_match_maker__welcome-title > span { width: 36px; height: 36px; }
+}
 .ai_match_maker__response {
   width: min(768px, 100%);
   margin: 0 auto 28px;
@@ -141,6 +158,7 @@ nav {
   font: 15px/1.7 "DM Sans";
   white-space: pre-wrap;
 }
+.ai_match_maker__response--error { color: #9f3f4b; }
 .ai_match_maker__response-identity { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: #4d465b; }
 .ai_match_maker__response-identity span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; background: #f0edff; color: #6756d8; }
 .ai_match_maker__response-identity b { font: 600 13px "Space Grotesk"; }
