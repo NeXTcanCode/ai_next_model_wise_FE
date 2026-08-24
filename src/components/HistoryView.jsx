@@ -1,36 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { History } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
 import { api } from "../lib/api";
+import { loadExchangeRates, setCurrency } from "../store";
 
 export default function HistoryView() {
+  const dispatch = useDispatch();
+  const selectedCurrency = useSelector((state) => state.currency.selected);
+  const exchangeRates = useSelector((state) => state.currency.rates);
   const [days, setDays] = useState(30);
   const [selectedModel, setSelectedModel] = useState("all");
-  const [selectedCurrency, setSelectedCurrency] = useState(() => localStorage.getItem("modelwise_history_currency") || "USD");
   const [items, setItems] = useState([]);
-  const [exchangeRates, setExchangeRates] = useState(null);
   useEffect(() => { api("/api/v1/recommendations?limit=100").then((data) => setItems(data.items || [])).catch(() => {}); }, []);
   useEffect(() => {
-    const cacheKey = "modelwise_exchange_rates_usd";
-    try {
-      const cached = JSON.parse(localStorage.getItem(cacheKey) || "null");
-      if (cached?.rates && Date.now() - cached.savedAt < 86400000) {
-        setExchangeRates(cached.rates);
-        return;
-      }
-    } catch {}
-
-    fetch("https://open.er-api.com/v6/latest/USD")
-      .then((response) => {
-        if (!response.ok) throw new Error("Exchange-rate request failed");
-        return response.json();
-      })
-      .then((data) => {
-        if (data.result !== "success" || !data.rates) return;
-        setExchangeRates(data.rates);
-        localStorage.setItem(cacheKey, JSON.stringify({ rates: data.rates, savedAt: Date.now() }));
-      })
-      .catch(() => setExchangeRates(null));
-  }, []);
+    dispatch(loadExchangeRates());
+  }, [dispatch]);
   const cutoff = Date.now() - days * 86400000;
   const recent = items.filter((item) => new Date(item.createdAt).getTime() >= cutoff);
   const modelOptions = [...new Set(recent.map((item) => item.result?.recommendedModelName || item.recommendedModel || "Unknown"))].sort();
@@ -50,7 +34,7 @@ export default function HistoryView() {
   }).format(cost * (currency === "USD" ? 1 : exchangeRates?.[currency] || 0));
   return (
       <section className="page-panel history-page container-fluid">
-      <div className="page-intro row align-items-center g-3"><p className="col-lg">Track recommendations, tokens, and prompt cost in your preferred currency.</p><div className="history-controls col-lg-auto d-flex flex-wrap gap-2"><HistoryDropdown value={selectedCurrency} options={currencyOptions} onChange={(currency) => { setSelectedCurrency(currency); localStorage.setItem("modelwise_history_currency", currency); }} /><HistoryDropdown value={`Last ${days} days`} options={[7, 15, 30].map((value) => ({ value, label: `Last ${value} days` }))} onChange={setDays} /><HistoryDropdown value={selectedModel === "all" ? "All models" : selectedModel} options={[{ value: "all", label: "All models" }, ...modelOptions.map((value) => ({ value, label: value }))]} onChange={setSelectedModel} /></div></div>
+      <div className="page-intro row align-items-center g-3"><p className="col-lg">Track recommendations, tokens, and prompt cost in your preferred currency.</p><div className="history-controls col-lg-auto d-flex flex-wrap gap-2"><HistoryDropdown value={selectedCurrency} options={currencyOptions} onChange={(currency) => dispatch(setCurrency(currency))} /><HistoryDropdown value={`Last ${days} days`} options={[7, 15, 30].map((value) => ({ value, label: `Last ${value} days` }))} onChange={setDays} /><HistoryDropdown value={selectedModel === "all" ? "All models" : selectedModel} options={[{ value: "all", label: "All models" }, ...modelOptions.map((value) => ({ value, label: value }))]} onChange={setSelectedModel} /></div></div>
       <div className="history-stats row g-3"><div className="col-md-4"><div className="h-100"><small>RECOMMENDATIONS</small><b>{filtered.length}</b></div></div><div className="col-md-4"><div className="h-100"><small>INPUT TOKENS</small><b>{tokens.toLocaleString()}</b></div></div><div className="col-md-4"><div className="history-cost-card h-100"><small>TOTAL INPUT COST ({selectedCurrency})</small><b>{selectedCurrency === "USD" || exchangeRates?.[selectedCurrency] ? formatCost(selectedCurrency) : "—"}</b>{selectedCurrency !== "USD" && <span className="history-cost-source">Converted from {formatCost("USD")} USD</span>}</div></div></div>
       <div className="history-chart">{chart.length ? chart.map(([name, count]) => <div className="chart-row" key={name}><span>{name}</span><div><i style={{ width: `${Math.max(8, (count / chart[0][1]) * 100)}%` }} /></div><b>{count}</b></div>) : <p className="empty-history">No recommendations in this period.</p>}</div>
     </section>

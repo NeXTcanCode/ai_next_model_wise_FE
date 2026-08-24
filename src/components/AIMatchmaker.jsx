@@ -13,7 +13,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [selectionMessage, setSelectionMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
+  const [selectedExcerpt, setSelectedExcerpt] = useState(null);
   const messageInputRef = useRef(null);
+  const conversationRef = useRef(null);
   const conversationEndRef = useRef(null);
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
@@ -79,6 +81,73 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     return () => window.clearTimeout(timer);
   }, [message]);
 
+  useEffect(() => {
+    const dismissSelectionAction = (event) => {
+      if (event.type !== "keydown" || event.key === "Escape") {
+        setSelectedExcerpt(null);
+      }
+    };
+    window.addEventListener("scroll", dismissSelectionAction, true);
+    window.addEventListener("keydown", dismissSelectionAction);
+    return () => {
+      window.removeEventListener("scroll", dismissSelectionAction, true);
+      window.removeEventListener("keydown", dismissSelectionAction);
+    };
+  }, []);
+
+  const showSelectionAction = () => {
+    window.requestAnimationFrame(() => {
+      const selection = window.getSelection();
+      const text = selection?.toString().trim();
+      if (!selection || selection.isCollapsed || !text) {
+        setSelectedExcerpt(null);
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      const container = conversationRef.current;
+      const selectedNode =
+        range.commonAncestorContainer.nodeType === Node.TEXT_NODE
+          ? range.commonAncestorContainer.parentElement
+          : range.commonAncestorContainer;
+      const messageElement = selectedNode?.closest?.(
+        ".ai_match_maker__user-message, .ai_match_maker__response"
+      );
+      if (!container?.contains(selectedNode) || !messageElement) {
+        setSelectedExcerpt(null);
+        return;
+      }
+
+      const rect = range.getBoundingClientRect();
+      const buttonWidth = 112;
+      const left = Math.min(
+        window.innerWidth - buttonWidth - 12,
+        Math.max(12, rect.right + 8)
+      );
+      const top =
+        rect.bottom + 44 < window.innerHeight
+          ? rect.bottom + 8
+          : Math.max(8, rect.top - 42);
+      setSelectedExcerpt({ text, left, top });
+    });
+  };
+
+  const addSelectionToChat = () => {
+    if (!selectedExcerpt?.text) return;
+    setMessage((current) =>
+      current
+        ? `${current}${current.endsWith("\n") ? "" : "\n\n"}${selectedExcerpt.text}`
+        : selectedExcerpt.text
+    );
+    setSelectedExcerpt(null);
+    window.getSelection()?.removeAllRanges();
+    window.requestAnimationFrame(() => {
+      const input = messageInputRef.current;
+      input?.focus();
+      input?.setSelectionRange(input.value.length, input.value.length);
+    });
+  };
+
   const recommendAndSelectModel = async (prompt = message) => {
     const promptToRecommend = prompt.trim();
     if (!promptToRecommend || isSelectingModel) return null;
@@ -143,6 +212,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       .filter((chatMessage) => !chatMessage.isError)
       .map(({ role, content }) => ({ role, content }));
     setMessages((current) => [...current, userMessage]);
+    setSelectedExcerpt(null);
     setMessage("");
     setIsResponding(true);
     setSelectionMessage("Getting your response…");
@@ -168,7 +238,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       // setSelectionMessage(`Response from ${data.provider}`);
       const selectedModelName =
         models.find((model) => model.id === selectedModelRef.current)
-          ?.displayName || "selected model";
+          ?.displayName || "Auto";
       setSelectionMessage(`Recommended model: ${selectedModelName}`);
     } catch (error) {
       setSelectionMessage("");
@@ -188,7 +258,12 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
 
   return (
     <section className="ai_match_maker">
-      <div className="ai_match_maker__conversation">
+      <div
+        ref={conversationRef}
+        className="ai_match_maker__conversation"
+        onMouseUp={showSelectionAction}
+        onTouchEnd={showSelectionAction}
+      >
         {!messages.length && !isResponding && (
           <div className="ai_match_maker__welcome">
             <div className="ai_match_maker__welcome-title">
@@ -279,6 +354,18 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             </button>
           </div> */}
       </div>
+
+      {selectedExcerpt && (
+        <button
+          type="button"
+          className="ai_match_maker__add-to-chat"
+          style={{ left: selectedExcerpt.left, top: selectedExcerpt.top }}
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={addSelectionToChat}
+        >
+          Add to chat
+        </button>
+      )}
 
       <form className="ai_match_maker__composer" onSubmit={handleSend}>
         <textarea
