@@ -97,9 +97,15 @@ export default function Sidebar({
                 )} days `
               : "No usage yet"}
           </small>
-          <small className="usage-note">
-            Longer prompts and responses use more.
-          </small>
+          {/* <details className="usage-limits">
+            <summary>Fair usage limits</summary>
+            <ol>
+              <li>Up to 2 messages per minute</li>
+              <li>Up to 15 messages per day</li>
+              <li>Up to 50 messages per week</li>
+              <li>Longer prompts and responses use more of your allowance</li>
+            </ol>
+          </details> */}
         </div>
         <button className="nav-item" onClick={onLogout}>
           <LogOut size={17} /> Sign out

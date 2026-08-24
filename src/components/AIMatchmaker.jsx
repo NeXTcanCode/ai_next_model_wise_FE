@@ -16,7 +16,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [files, setFiles] = useState([]);
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
-  const [responseMode, setResponseMode] = useState(() => localStorage.getItem("next_ai_response_mode") || "standard");
+  const [responseMode, setResponseMode] = useState(
+    () => localStorage.getItem("next_ai_response_mode") || "standard"
+  );
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [selectionMessage, setSelectionMessage] = useState("");
   const [messages, setMessages] = useState([]);
@@ -27,7 +29,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
   const hour = new Date().getHours();
-  const firstName = String(userName || "").trim().split(/\s+/)[0];
+  const firstName = String(userName || "")
+    .trim()
+    .split(/\s+/)[0];
   const timeGreeting =
     hour >= 5 && hour < 12
       ? "Good morning"
@@ -90,7 +94,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     const promptToRecommend = prompt.trim();
     if (!promptToRecommend || isSelectingModel) return null;
     if (lastRecommendedPromptRef.current === promptToRecommend) {
-      return models.find((model) => model.id === selectedModelRef.current) || null;
+      return (
+        models.find((model) => model.id === selectedModelRef.current) || null
+      );
     }
     setIsSelectingModel(true);
     setSelectionMessage("Choosing the best model…");
@@ -176,7 +182,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           ?.displayName || "selected model";
       setSelectionMessage(`Recommended model: ${selectedModelName}`);
     } catch (error) {
-      setSelectionMessage(error.message || "Could not get a response.");
+      setSelectionMessage("");
       setMessages((current) => [
         ...current,
         {
@@ -210,16 +216,21 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         {!messages.length && !isResponding && (
           <div className="ai_match_maker__welcome">
             <div className="ai_match_maker__welcome-title">
-              <span><Sparkles size={24} /></span>
-              <h2>{timeGreeting}{firstName ? `, ${firstName}` : ""}</h2>
+              <span>
+                <Sparkles size={24} />
+              </span>
+              <h2>
+                {timeGreeting}
+                {firstName ? `, ${firstName}` : ""}
+              </h2>
             </div>
             <p>Ask a question, explore an idea, or build something new.</p>
-            <div className="ai_match_maker__welcome-prompts">
+            {/* <div className="ai_match_maker__welcome-prompts">
               <button type="button" onClick={() => setMessage("Review my code and suggest improvements")}>Review code</button>
               <button type="button" onClick={() => setMessage("Explain a difficult concept in simple terms")}>Explain a concept</button>
               <button type="button" onClick={() => setMessage("Help me analyze this text")}>Analyze text</button>
               <button type="button" onClick={() => setMessage("Help me write something compelling")}>Write something</button>
-            </div>
+            </div> */}
           </div>
         )}
         {messages.map((chatMessage) =>
@@ -229,11 +240,15 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             </div>
           ) : (
             <article
-              className={`ai_match_maker__response${chatMessage.isError ? " ai_match_maker__response--error" : ""}`}
+              className={`ai_match_maker__response${
+                chatMessage.isError ? " ai_match_maker__response--error" : ""
+              }`}
               key={chatMessage.id}
             >
               <div className="ai_match_maker__response-identity">
-                <span><Bot size={15} /></span>
+                <span>
+                  <Bot size={15} />
+                </span>
                 <b>NeXT AI</b>
               </div>
               <p>{chatMessage.content}</p>
@@ -370,7 +385,10 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
               value={responseMode}
               onChange={(event) => {
                 setResponseMode(event.target.value);
-                localStorage.setItem("next_ai_response_mode", event.target.value);
+                localStorage.setItem(
+                  "next_ai_response_mode",
+                  event.target.value
+                );
               }}
               aria-label="Response length"
             >

@@ -138,30 +138,108 @@ nav {
   justify-content: flex-start;
   padding-top: 24px;
 }
-.ai_match_maker__welcome { width: min(680px, 100%); margin: auto; text-align: center; }
-.ai_match_maker__welcome-title { display: flex; align-items: center; justify-content: center; gap: 13px; color: #28233a; }
-.ai_match_maker__welcome-title > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: #6d5ce7; color: #fff; transform: rotate(-6deg); }
-.ai_match_maker__welcome h2 { margin: 0; font: 500 clamp(38px, 5vw, 58px)/1.05 Georgia, "Times New Roman", serif; letter-spacing: -0.04em; }
-.ai_match_maker__welcome > p { margin-top: 14px; color: #8b8596; font-size: 14px; }
-.ai_match_maker__welcome-prompts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 520px; margin: 30px auto 0; }
-.ai_match_maker__welcome-prompts button { padding: 13px 15px; border: 1px solid #e5e1eb; border-radius: 13px; background: #fff; color: #5d5768; font: 500 13px "DM Sans"; text-align: left; cursor: pointer; transition: border-color .18s, background .18s, transform .18s; }
-.ai_match_maker__welcome-prompts button:hover { border-color: #cfc7f4; background: #faf9ff; transform: translateY(-1px); }
+.ai_match_maker__welcome {
+  width: min(680px, 100%);
+  margin: auto;
+  text-align: center;
+}
+.ai_match_maker__welcome-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 13px;
+  color: #28233a;
+}
+.ai_match_maker__welcome-title > span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #6d5ce7;
+  color: #fff;
+  transform: rotate(-6deg);
+}
+.ai_match_maker__welcome h2 {
+  margin: 0;
+  font: 500 clamp(38px, 5vw, 58px) / 1.05 Georgia, "Times New Roman", serif;
+  letter-spacing: -0.04em;
+}
+.ai_match_maker__welcome > p {
+  margin-top: 14px;
+  color: #8b8596;
+  font-size: 14px;
+}
+.ai_match_maker__welcome-prompts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 520px;
+  margin: 30px auto 0;
+}
+.ai_match_maker__welcome-prompts button {
+  padding: 13px 15px;
+  border: 1px solid #e5e1eb;
+  border-radius: 13px;
+  background: #fff;
+  color: #5d5768;
+  font: 500 13px "DM Sans";
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.ai_match_maker__welcome-prompts button:hover {
+  border-color: #cfc7f4;
+  background: #faf9ff;
+  transform: translateY(-1px);
+}
 @media (max-width: 600px) {
-  .ai_match_maker__welcome-prompts { grid-template-columns: 1fr; max-width: 320px; margin-top: 24px; }
-  .ai_match_maker__welcome h2 { font-size: 40px; }
-  .ai_match_maker__welcome-title > span { width: 36px; height: 36px; }
+  .ai_match_maker__welcome-prompts {
+    grid-template-columns: 1fr;
+    max-width: 320px;
+    margin-top: 24px;
+  }
+  .ai_match_maker__welcome h2 {
+    font-size: 40px;
+  }
+  .ai_match_maker__welcome-title > span {
+    width: 36px;
+    height: 36px;
+  }
 }
 .ai_match_maker__response {
   width: min(768px, 100%);
+  min-width: 0;
   margin: 0 auto 28px;
   color: #393343;
   font: 15px/1.7 "DM Sans";
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
-.ai_match_maker__response--error { color: #9f3f4b; }
-.ai_match_maker__response-identity { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; color: #4d465b; }
-.ai_match_maker__response-identity span { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px; background: #f0edff; color: #6756d8; }
-.ai_match_maker__response-identity b { font: 600 13px "Space Grotesk"; }
+.ai_match_maker__response p { max-width: 100%; margin-right: 0; overflow-wrap: anywhere; word-break: break-word; }
+.ai_match_maker__response--error {
+  color: #9f3f4b;
+}
+.ai_match_maker__response-identity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #4d465b;
+}
+.ai_match_maker__response-identity span {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+  background: #f0edff;
+  color: #6756d8;
+}
+.ai_match_maker__response-identity b {
+  font: 600 13px "Space Grotesk";
+}
 .ai_match_maker__response small {
   display: block;
   margin-top: 12px;
@@ -178,6 +256,8 @@ nav {
   color: #373044;
   font: 14px/1.55 "DM Sans";
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .ai_match_maker__thinking {
   align-self: flex-start;
@@ -436,8 +516,12 @@ nav {
 .ai_match_maker__model-picker + .ai_match_maker__send {
   margin-left: 5px;
 }
-.ai_match_maker__length-picker { margin-left: 2px; }
-.ai_match_maker__length-picker select { max-width: 105px; }
+.ai_match_maker__length-picker {
+  margin-left: 2px;
+}
+.ai_match_maker__length-picker select {
+  max-width: 105px;
+}
 @media (max-width: 600px) {
   .ai_match_maker {
     padding-right: 16px;
@@ -503,7 +587,29 @@ nav {
   color: #4a4457;
   font: 11px "DM Mono";
 }
-.usage-note { margin-top: 5px; line-height: 1.35; }
+.usage-limits {
+  margin-top: 9px;
+  border-top: 1px solid #ebe7f1;
+  padding-top: 8px;
+}
+.usage-limits summary {
+  color: #6e687b;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.usage-limits ol {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 17px;
+  color: #858095;
+  line-height: 1.4;
+}
+.usage-limits li::marker {
+  color: #7463e8;
+  font-family: "DM Mono";
+}
 .progress {
   height: 5px;
   background: #e9e6f4;
@@ -517,10 +623,18 @@ nav {
   background: #7463e8;
   border-radius: 4px;
 }
-.usage-warning .progress i { background: #d59635; }
-.usage-critical .progress i { background: #d35f69; }
-.usage.usage-warning b { color: #a46d1e; }
-.usage.usage-critical b { color: #b84652; }
+.usage-warning .progress i {
+  background: #d59635;
+}
+.usage-critical .progress i {
+  background: #d35f69;
+}
+.usage.usage-warning b {
+  color: #a46d1e;
+}
+.usage.usage-critical b {
+  color: #b84652;
+}
 main {
   flex: 1;
   min-width: 0;
