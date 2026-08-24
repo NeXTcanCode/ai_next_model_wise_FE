@@ -1,19 +1,9 @@
 import React, { useEffect, useRef, useState } from "react";
-import {
-  ArrowUp,
-  Bot,
-  ChevronDown,
-  Paperclip,
-  Plus,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { ArrowUp, Bot, ChevronDown, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 
 export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [message, setMessage] = useState("");
-  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
-  const [files, setFiles] = useState([]);
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
   const [responseMode, setResponseMode] = useState(
@@ -25,7 +15,6 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [isResponding, setIsResponding] = useState(false);
   const messageInputRef = useRef(null);
   const conversationEndRef = useRef(null);
-  const fileInputRef = useRef(null);
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
   const hour = new Date().getHours();
@@ -197,19 +186,6 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     }
   };
 
-  const openFilePicker = () => {
-    fileInputRef.current?.click();
-    setIsAttachmentMenuOpen(false);
-  };
-
-  const handleFiles = (event) => {
-    setFiles((current) => [
-      ...current,
-      ...Array.from(event.target.files || []),
-    ]);
-    event.target.value = "";
-  };
-
   return (
     <section className="ai_match_maker">
       <div className="ai_match_maker__conversation">
@@ -305,33 +281,6 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       </div>
 
       <form className="ai_match_maker__composer" onSubmit={handleSend}>
-        {files.length > 0 && (
-          <div
-            className="ai_match_maker__attachments"
-            aria-label="Attached files"
-          >
-            {files.map((file, index) => (
-              <span
-                className="ai_match_maker__attachment"
-                key={`${file.name}-${index}`}
-              >
-                <Paperclip size={14} />
-                <span>{file.name}</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    setFiles((current) =>
-                      current.filter((_, fileIndex) => fileIndex !== index)
-                    )
-                  }
-                  aria-label={`Remove ${file.name}`}
-                >
-                  <X size={13} />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
         <textarea
           ref={messageInputRef}
           value={message}
@@ -346,32 +295,14 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           rows={1}
           aria-label="Message NeXT AI"
         />
-        <input
-          ref={fileInputRef}
-          className="ai_match_maker__file-input"
-          type="file"
-          multiple
-          onChange={handleFiles}
-          aria-hidden="true"
-        />
         <div className="ai_match_maker__composer-actions">
-          {/* <button type="button" aria-label="Open attachment menu" onClick={() => setIsAttachmentMenuOpen((open) => !open)} aria-expanded={isAttachmentMenuOpen}>
-              <Plus size={18} />
-            </button> */}
-          <button
-            type="button"
-            aria-label="Attach file"
-            onClick={openFilePicker}
-          >
-            <Paperclip size={17} />
-          </button>
           <label className="ai_match_maker__model-picker">
             <select
               value={selectedModel}
               onChange={(event) => setSelectedModel(event.target.value)}
               aria-label="Select AI model"
             >
-              {!models.length && <option value="">No models available</option>}
+              {!models.length && <option value="">Auto</option>}
               {models.map((model) => (
                 <option key={model.id} value={model.id}>
                   {model.displayName}
@@ -407,16 +338,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             <ArrowUp size={17} />
           </button>
         </div>
-        {isAttachmentMenuOpen && (
-          <div className="ai_match_maker__attachment-menu">
-            <button type="button" onClick={openFilePicker}>
-              <Paperclip size={16} /> Upload files
-            </button>
-          </div>
-        )}
         <small>
           {selectionMessage ||
-            "NeXT AI can make mistakes. Check important information."}
+            "NeXT AI currently supports text-based conversations."}
         </small>
       </form>
     </section>

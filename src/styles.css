@@ -378,65 +378,6 @@ nav {
   box-shadow: 0 12px 36px rgba(51, 38, 93, 0.18),
     0 2px 8px rgba(51, 38, 93, 0.08);
 }
-.ai_match_maker__file-input {
-  display: none;
-}
-.ai_match_maker__attachments {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  margin-bottom: 9px;
-}
-.ai_match_maker__attachment {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 240px;
-  padding: 6px 8px;
-  border: 1px solid #e3dfeb;
-  border-radius: 9px;
-  color: #625d6d;
-  background: #faf9fc;
-  font-size: 11px;
-}
-.ai_match_maker__attachment > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.ai_match_maker__attachment button {
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #97919f;
-  cursor: pointer;
-}
-.ai_match_maker__attachment-menu {
-  position: absolute;
-  margin-top: -2px;
-  padding: 6px;
-  border: 1px solid #e2deea;
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 8px 24px #33265d1c;
-}
-.ai_match_maker__attachment-menu button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 0;
-  border-radius: 7px;
-  padding: 9px 11px;
-  background: #fff;
-  color: #514b5c;
-  font: 12px "DM Sans";
-  cursor: pointer;
-}
-.ai_match_maker__attachment-menu button:hover {
-  background: #f5f2fc;
-}
 .ai_match_maker__composer textarea {
   background: #ffffff;
   color: #2f293a;
