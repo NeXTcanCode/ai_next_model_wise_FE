@@ -47,6 +47,7 @@ function Shell({
   removeModel,
   recommend,
   isRecommending,
+  onUsageRefresh,
 }) {
   return (
     <div className="app-shell">
@@ -98,7 +99,7 @@ function Shell({
           </div>
         </header>
         {view === "bot" ? (
-          <AIMatchmaker />
+          <AIMatchmaker onUsageRefresh={onUsageRefresh} />
         ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}
@@ -153,11 +154,14 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [modelModalOpen, setModelModalOpen] = useState(false);
-  const [usage, setUsage] = useState({ count: 0, limit: 100, resetAt: null });
+  const [usage, setUsage] = useState({ usedUnits: 0, limitUnits: 40000, percent: 0, resetAt: null });
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
   const [isRecommending, setIsRecommending] = useState(false);
   const [checkingSession, setCheckingSession] = useState(Boolean(localStorage.getItem("modelwise_session")));
   const recommendInFlight = useRef(false);
+  const refreshUsage = () => {
+    api("/api/v1/usage").then(setUsage).catch(() => {});
+  };
   const updatePrompt = (value) => {
     setPrompt(value);
     setResult(null);
@@ -297,13 +301,6 @@ function App() {
         tokens: current.tokens + (data.estimatedInputTokens || 0),
         cost: current.cost + (data.estimatedInputCostUsd || 0),
       }));
-      setUsage((current) => ({
-        ...current,
-        count: current.count + 1,
-        resetAt:
-          current.resetAt ||
-          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      }));
     } catch (error) {
       toast.error(error.message);
     } finally {
@@ -353,6 +350,7 @@ function App() {
             removeModel={removeModel}
             recommend={recommend}
             isRecommending={isRecommending}
+            onUsageRefresh={refreshUsage}
           />
         } />
         <Route path="*" element={
@@ -383,6 +381,7 @@ function App() {
             removeModel={removeModel}
             recommend={recommend}
             isRecommending={isRecommending}
+            onUsageRefresh={refreshUsage}
           />
         } />
       </Routes>

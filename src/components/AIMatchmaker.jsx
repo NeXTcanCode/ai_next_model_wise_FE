@@ -10,12 +10,13 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 
-export default function AIMatchmaker() {
+export default function AIMatchmaker({ onUsageRefresh }) {
   const [message, setMessage] = useState("");
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
+  const [responseMode, setResponseMode] = useState(() => localStorage.getItem("next_ai_response_mode") || "standard");
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [selectionMessage, setSelectionMessage] = useState("");
   const [response, setResponse] = useState("");
@@ -24,6 +25,7 @@ export default function AIMatchmaker() {
   const messageInputRef = useRef(null);
   const fileInputRef = useRef(null);
   const selectedModelRef = useRef("");
+  const lastRecommendedPromptRef = useRef("");
 
   useEffect(() => {
     selectedModelRef.current = selectedModel;
@@ -70,6 +72,9 @@ export default function AIMatchmaker() {
   const recommendAndSelectModel = async (prompt = message) => {
     const promptToRecommend = prompt.trim();
     if (!promptToRecommend || isSelectingModel) return null;
+    if (lastRecommendedPromptRef.current === promptToRecommend) {
+      return models.find((model) => model.id === selectedModelRef.current) || null;
+    }
     setIsSelectingModel(true);
     setSelectionMessage("Choosing the best model…");
     try {
@@ -91,6 +96,7 @@ export default function AIMatchmaker() {
           },
         }),
       });
+      lastRecommendedPromptRef.current = promptToRecommend;
       const recommendedId =
         recommendation.recommendedModelId ||
         recommendation.recommendedModel?.id;
@@ -125,9 +131,10 @@ export default function AIMatchmaker() {
     try {
       const data = await api("/api/v1/chat", {
         method: "POST",
-        body: JSON.stringify({ prompt: promptToSend }),
+        body: JSON.stringify({ prompt: promptToSend, responseMode }),
       });
       setResponse(data.response || "No response was returned.");
+      onUsageRefresh?.();
       // setSelectionMessage(`Response from ${data.provider}`);
       const selectedModelName =
         models.find((model) => model.id === selectedModelRef.current)
@@ -289,6 +296,21 @@ export default function AIMatchmaker() {
                   {model.displayName}
                 </option>
               ))}
+            </select>
+            <ChevronDown size={16} aria-hidden="true" />
+          </label>
+          <label className="ai_match_maker__model-picker ai_match_maker__length-picker">
+            <select
+              value={responseMode}
+              onChange={(event) => {
+                setResponseMode(event.target.value);
+                localStorage.setItem("next_ai_response_mode", event.target.value);
+              }}
+              aria-label="Response length"
+            >
+              <option value="concise">Concise</option>
+              <option value="standard">Standard</option>
+              <option value="detailed">Detailed</option>
             </select>
             <ChevronDown size={16} aria-hidden="true" />
           </label>

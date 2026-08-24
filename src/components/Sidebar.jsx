@@ -66,17 +66,15 @@ export default function Sidebar({
         ))}
       </nav>
       <div className="sidebar-bottom">
-        <div className="usage">
+        <div className={`usage ${usage.percent >= 90 ? "usage-critical" : usage.percent >= 70 ? "usage-warning" : ""}`}>
           <div>
-            <span>Free usage</span>
-            <b>
-              {usage.count} / {usage.limit}
-            </b>
+            <span>Weekly usage</span>
+            <b>{usage.percent || 0}% used</b>
           </div>
           <div className="progress">
             <i
               style={{
-                width: `${Math.min(100, (usage.count / usage.limit) * 100)}%`,
+                width: `${Math.min(100, usage.percent || 0)}%`,
               }}
             />
           </div>
@@ -89,8 +87,9 @@ export default function Sidebar({
                     Math.ceil((new Date(usage.resetAt) - Date.now()) / 86400000)
                   )
                 )} days`
-              : "Starts with your first message"}
+              : "Starts with your first response"}
           </small>
+          <small className="usage-note">Longer prompts and responses use more.</small>
         </div>
         <button className="nav-item" onClick={onLogout}>
           <LogOut size={17} /> Sign out

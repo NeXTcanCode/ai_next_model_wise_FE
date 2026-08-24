@@ -123,6 +123,8 @@ nav {
   justify-content: space-between;
   padding: 72px 24px 48px;
   background: #fff;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 .ai_match_maker__conversation {
   width: min(768px, 100%);
@@ -361,6 +363,7 @@ nav {
   gap: 5px;
   margin-top: 8px;
   background: #ffffff;
+  min-width: 0;
 }
 .ai_match_maker__composer-actions button {
   border: 0;
@@ -393,6 +396,7 @@ nav {
   align-items: center;
   margin-left: auto;
   color: #77717f;
+  min-width: 0;
 }
 .ai_match_maker__model-picker select {
   appearance: none;
@@ -404,6 +408,7 @@ nav {
   outline: 0;
   font: 12px "DM Sans";
   cursor: pointer;
+  min-width: 0;
 }
 .ai_match_maker__model-picker svg {
   position: absolute;
@@ -412,6 +417,49 @@ nav {
 }
 .ai_match_maker__model-picker + .ai_match_maker__send {
   margin-left: 5px;
+}
+.ai_match_maker__length-picker { margin-left: 2px; }
+.ai_match_maker__length-picker select { max-width: 105px; }
+@media (max-width: 600px) {
+  .ai_match_maker {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+  .ai_match_maker__composer {
+    width: 100%;
+    max-width: 100%;
+  }
+  .ai_match_maker__composer-actions {
+    display: grid;
+    grid-template-columns: 30px minmax(0, 1fr) 94px 34px;
+    gap: 4px;
+    width: 100%;
+  }
+  .ai_match_maker__composer-actions > button,
+  .ai_match_maker__composer-actions .ai_match_maker__send {
+    width: 30px;
+    min-width: 30px;
+    margin: 0;
+  }
+  .ai_match_maker__model-picker,
+  .ai_match_maker__length-picker {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    overflow: hidden;
+  }
+  .ai_match_maker__model-picker select,
+  .ai_match_maker__length-picker select {
+    width: 100%;
+    max-width: 100%;
+    padding-right: 19px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ai_match_maker__model-picker svg {
+    right: 1px;
+  }
 }
 .ai_match_maker__composer small {
   display: block;
@@ -437,6 +485,7 @@ nav {
   color: #4a4457;
   font: 11px "DM Mono";
 }
+.usage-note { margin-top: 5px; line-height: 1.35; }
 .progress {
   height: 5px;
   background: #e9e6f4;
@@ -450,6 +499,10 @@ nav {
   background: #7463e8;
   border-radius: 4px;
 }
+.usage-warning .progress i { background: #d59635; }
+.usage-critical .progress i { background: #d35f69; }
+.usage.usage-warning b { color: #a46d1e; }
+.usage.usage-critical b { color: #b84652; }
 main {
   flex: 1;
   min-width: 0;
