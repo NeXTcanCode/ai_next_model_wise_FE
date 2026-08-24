@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowUp, Bot, ChevronDown, Sparkles } from "lucide-react";
+import { ArrowUp, Bot, ChevronDown, RotateCcw, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 
 export default function AIMatchmaker({ onUsageRefresh, userName }) {
+  const unavailableMessage =
+    "NeXT AI is temporarily unavailable. Please try again in a moment.";
   const [message, setMessage] = useState("");
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
@@ -53,19 +55,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     if (!input) return;
 
     input.style.height = "auto";
-    input.style.height = `${input.scrollHeight}px`;
-
-    // Once the composer becomes taller than the comfortable viewport area,
-    // keep the bottom controls reachable while the user continues typing or pasting.
-    if (input.scrollHeight > 240) {
-      const scrollContainer = conversationRef.current;
-      requestAnimationFrame(() => {
-        scrollContainer?.scrollTo({
-          top: scrollContainer.scrollHeight,
-          behavior: "auto",
-        });
-      });
-    }
+    const maximumHeight = Math.min(320, window.innerHeight * 0.4);
+    const nextHeight = Math.min(input.scrollHeight, maximumHeight);
+    input.style.height = `${nextHeight}px`;
+    input.style.overflowY =
+      input.scrollHeight > maximumHeight ? "auto" : "hidden";
   }, [message]);
 
   useEffect(() => {
@@ -249,11 +243,22 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           role: "assistant",
           content: error.message || "Could not get a response.",
           isError: true,
+          retryPrompt:
+            error.message === unavailableMessage ? promptToSend : null,
         },
       ]);
     } finally {
       setIsResponding(false);
     }
+  };
+
+  const restorePromptForRetry = (prompt) => {
+    setMessage(prompt);
+    window.requestAnimationFrame(() => {
+      const input = messageInputRef.current;
+      input?.focus();
+      input?.setSelectionRange(input.value.length, input.value.length);
+    });
   };
 
   return (
@@ -303,6 +308,16 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
                 <b>NeXT AI</b>
               </div>
               <p>{chatMessage.content}</p>
+              {chatMessage.retryPrompt && (
+                <button
+                  type="button"
+                  className="ai_match_maker__retry"
+                  onClick={() => restorePromptForRetry(chatMessage.retryPrompt)}
+                >
+                  <RotateCcw size={14} />
+                  Retry
+                </button>
+              )}
             </article>
           )
         )}

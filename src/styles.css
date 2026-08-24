@@ -164,6 +164,7 @@ nav {
   to { opacity: 1; transform: translateY(0); }
 }
 .ai_match_maker__welcome {
+  flex: 0 0 auto;
   width: min(680px, 100%);
   margin: auto;
   text-align: center;
@@ -233,6 +234,7 @@ nav {
   }
 }
 .ai_match_maker__response {
+  flex: 0 0 auto;
   width: min(768px, 100%);
   min-width: 0;
   margin: 0 auto 28px;
@@ -246,6 +248,20 @@ nav {
 .ai_match_maker__response--error {
   color: #9f3f4b;
 }
+.ai_match_maker__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 7px 10px;
+  border: 1px solid #ded8e8;
+  border-radius: 9px;
+  background: #fff;
+  color: #5e566b;
+  font: 600 11px "DM Sans";
+  cursor: pointer;
+}
+.ai_match_maker__retry:hover { border-color: #bdb3e8; background: #f8f6ff; color: #5c4bcf; }
 .ai_match_maker__response-identity {
   display: flex;
   align-items: center;
@@ -272,6 +288,7 @@ nav {
   font-size: 11px;
 }
 .ai_match_maker__user-message {
+  flex: 0 0 auto;
   align-self: flex-end;
   max-width: min(620px, 85%);
   margin: 0 0 24px auto;
@@ -285,6 +302,7 @@ nav {
   word-break: break-word;
 }
 .ai_match_maker__thinking {
+  flex: 0 0 auto;
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
@@ -411,8 +429,10 @@ nav {
   resize: none;
   height: auto;
   min-height: 28px;
-  max-height: none;
+  max-height: min(320px, 40dvh);
   overflow-y: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
   padding: 1px 2px;
   font: 16px/1.5 "DM Mono", "SFMono-Regular", Consolas, monospace;
   letter-spacing: -0.02em;
