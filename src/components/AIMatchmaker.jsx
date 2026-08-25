@@ -1,10 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ArrowUp, Bot, ChevronDown, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowUp,
+  Bot,
+  ChevronDown,
+  ImagePlus,
+  RotateCcw,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { api } from "../lib/api";
 
 export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const unavailableMessage =
     "NeXT AI is temporarily unavailable. Please try again in a moment.";
+  const visionUnavailableMessage =
+    "NeXT AI image analysis is temporarily unavailable. Please try again in a moment.";
   const [message, setMessage] = useState("");
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
@@ -16,7 +26,10 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [messages, setMessages] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
   const [selectedExcerpt, setSelectedExcerpt] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const messageInputRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const imagePreviewUrlsRef = useRef([]);
   const conversationRef = useRef(null);
   const conversationEndRef = useRef(null);
   const selectedModelRef = useRef("");
@@ -70,10 +83,17 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   }, [messages, isResponding]);
 
   useEffect(() => {
-    if (!message.trim()) return undefined;
+    if (!message.trim() || selectedImage) return undefined;
     const timer = window.setTimeout(() => recommendAndSelectModel(), 5000);
     return () => window.clearTimeout(timer);
-  }, [message]);
+  }, [message, selectedImage]);
+
+  useEffect(
+    () => () => {
+      imagePreviewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+    },
+    []
+  );
 
   useEffect(() => {
     const dismissSelectionAction = (event) => {
@@ -194,13 +214,17 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
 
   const handleSend = async (event) => {
     event.preventDefault();
-    const promptToSend = message.trim();
+    const imageToSend = selectedImage;
+    const promptToSend =
+      message.trim() || (imageToSend ? "Describe this image." : "");
     if (!promptToSend || isResponding) return;
 
     const userMessage = {
       id: `user-${Date.now()}`,
       role: "user",
       content: promptToSend,
+      imageUrl: imageToSend?.previewUrl || null,
+      imageName: imageToSend?.file.name || null,
     };
     const conversationToSend = [...messages, userMessage]
       .filter((chatMessage) => !chatMessage.isError)
@@ -208,18 +232,34 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     setMessages((current) => [...current, userMessage]);
     setSelectedExcerpt(null);
     setMessage("");
+    setSelectedImage(null);
     setIsResponding(true);
-    setSelectionMessage("Getting your response…");
-    if (!isSelectingModel) recommendAndSelectModel(promptToSend);
+    setSelectionMessage(
+      imageToSend ? "NeXT is analyzing your image…" : "Getting your response…"
+    );
+    if (!imageToSend && !isSelectingModel) recommendAndSelectModel(promptToSend);
     try {
-      const data = await api("/api/v1/chat", {
-        method: "POST",
-        body: JSON.stringify({
-          prompt: promptToSend,
-          messages: conversationToSend,
-          responseMode,
-        }),
-      });
+      let data;
+      if (imageToSend) {
+        const formData = new FormData();
+        formData.append("image", imageToSend.file);
+        formData.append("prompt", promptToSend);
+        formData.append("messages", JSON.stringify(conversationToSend));
+        formData.append("responseMode", responseMode);
+        data = await api("/api/v1/chat/image", {
+          method: "POST",
+          body: formData,
+        });
+      } else {
+        data = await api("/api/v1/chat", {
+          method: "POST",
+          body: JSON.stringify({
+            prompt: promptToSend,
+            messages: conversationToSend,
+            responseMode,
+          }),
+        });
+      }
       setMessages((current) => [
         ...current,
         {
@@ -230,10 +270,14 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       ]);
       onUsageRefresh?.();
       // setSelectionMessage(`Response from ${data.provider}`);
-      const selectedModelName =
-        models.find((model) => model.id === selectedModelRef.current)
-          ?.displayName || "Auto";
-      setSelectionMessage(`Recommended model: ${selectedModelName}`);
+      if (imageToSend) {
+        setSelectionMessage("Image analyzed by NeXT Vision");
+      } else {
+        const selectedModelName =
+          models.find((model) => model.id === selectedModelRef.current)
+            ?.displayName || "Auto";
+        setSelectionMessage(`Recommended model: ${selectedModelName}`);
+      }
     } catch (error) {
       setSelectionMessage("");
       setMessages((current) => [
@@ -244,7 +288,12 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           content: error.message || "Could not get a response.",
           isError: true,
           retryPrompt:
-            error.message === unavailableMessage ? promptToSend : null,
+            error.message === unavailableMessage ||
+            error.message === visionUnavailableMessage
+              ? promptToSend
+              : null,
+          retryImage:
+            error.message === visionUnavailableMessage ? imageToSend : null,
         },
       ]);
     } finally {
@@ -252,13 +301,33 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     }
   };
 
-  const restorePromptForRetry = (prompt) => {
+  const restorePromptForRetry = (prompt, image = null) => {
     setMessage(prompt);
+    if (image) setSelectedImage(image);
     window.requestAnimationFrame(() => {
       const input = messageInputRef.current;
       input?.focus();
       input?.setSelectionRange(input.value.length, input.value.length);
     });
+  };
+
+  const chooseImage = (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+    if (!allowedTypes.has(file.type)) {
+      setSelectionMessage("Upload a JPEG, PNG, or WebP image.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setSelectionMessage("Choose an image smaller than 5 MB.");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(file);
+    imagePreviewUrlsRef.current.push(previewUrl);
+    setSelectedImage({ file, previewUrl });
+    setSelectionMessage("");
   };
 
   return (
@@ -292,6 +361,12 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         {messages.map((chatMessage) =>
           chatMessage.role === "user" ? (
             <div className="ai_match_maker__user-message" key={chatMessage.id}>
+              {chatMessage.imageUrl && (
+                <img
+                  src={chatMessage.imageUrl}
+                  alt={chatMessage.imageName || "Uploaded image"}
+                />
+              )}
               {chatMessage.content}
             </div>
           ) : (
@@ -312,7 +387,12 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
                 <button
                   type="button"
                   className="ai_match_maker__retry"
-                  onClick={() => restorePromptForRetry(chatMessage.retryPrompt)}
+                  onClick={() =>
+                    restorePromptForRetry(
+                      chatMessage.retryPrompt,
+                      chatMessage.retryImage
+                    )
+                  }
                 >
                   <RotateCcw size={14} />
                   Retry
@@ -383,6 +463,19 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       )}
 
       <form className="ai_match_maker__composer" onSubmit={handleSend}>
+        {selectedImage && (
+          <div className="ai_match_maker__image-preview">
+            <img src={selectedImage.previewUrl} alt="Selected upload preview" />
+            <span>{selectedImage.file.name}</span>
+            <button
+              type="button"
+              onClick={() => setSelectedImage(null)}
+              aria-label="Remove selected image"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
         <textarea
           ref={messageInputRef}
           value={message}
@@ -397,7 +490,22 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           rows={1}
           aria-label="Message NeXT AI"
         />
+        <input
+          ref={imageInputRef}
+          className="ai_match_maker__image-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          onChange={chooseImage}
+        />
         <div className="ai_match_maker__composer-actions">
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            aria-label="Upload an image"
+            title="Upload image"
+          >
+            <ImagePlus size={17} />
+          </button>
           <label className="ai_match_maker__model-picker">
             <select
               value={selectedModel}
@@ -434,7 +542,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           <button
             className="ai_match_maker__send"
             type="submit"
-            disabled={!message.trim() || isResponding}
+            disabled={(!message.trim() && !selectedImage) || isResponding}
             aria-label="Send message"
           >
             <ArrowUp size={17} />
@@ -442,7 +550,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         </div>
         <small>
           {selectionMessage ||
-            "NeXT AI currently supports text-based conversations."}
+            "NeXT AI supports text and image conversations."}
         </small>
       </form>
     </section>

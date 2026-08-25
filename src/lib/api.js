@@ -2,10 +2,11 @@ const API_BASE = import.meta.env.VITE_API_URL || "https://ai-nex-model-wise-be.o
 
 export const api = async (path, options = {}) => {
   const token = localStorage.getItem("modelwise_session");
+  const isFormData = options.body instanceof FormData;
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
-      "Content-Type": "application/json",
+      ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },

@@ -301,6 +301,14 @@ nav {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+.ai_match_maker__user-message img {
+  display: block;
+  width: min(280px, 100%);
+  max-height: 240px;
+  margin-bottom: 9px;
+  border-radius: 12px;
+  object-fit: cover;
+}
 .ai_match_maker__thinking {
   flex: 0 0 auto;
   align-self: flex-start;
@@ -421,6 +429,45 @@ nav {
   box-shadow: 0 12px 36px rgba(51, 38, 93, 0.18),
     0 2px 8px rgba(51, 38, 93, 0.08);
 }
+.ai_match_maker__image-input { display: none; }
+.ai_match_maker__image-preview {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) 26px;
+  align-items: center;
+  gap: 9px;
+  width: min(320px, 100%);
+  margin-bottom: 9px;
+  padding: 6px;
+  border: 1px solid #e1ddea;
+  border-radius: 11px;
+  background: #faf9fd;
+  color: #625b6e;
+  font-size: 11px;
+}
+.ai_match_maker__image-preview img {
+  width: 46px;
+  height: 46px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.ai_match_maker__image-preview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ai_match_maker__image-preview button {
+  display: grid;
+  place-items: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #8f8899;
+  cursor: pointer;
+}
+.ai_match_maker__image-preview button:hover { background: #eeeaf5; color: #4c4657; }
 .ai_match_maker__composer textarea {
   background: #ffffff;
   color: #2f293a;
@@ -519,7 +566,7 @@ nav {
   }
   .ai_match_maker__composer-actions {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 94px 34px;
+    grid-template-columns: 30px minmax(0, 1fr) 94px 34px;
     gap: 4px;
     width: 100%;
   }
