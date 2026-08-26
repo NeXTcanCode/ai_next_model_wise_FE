@@ -10,6 +10,10 @@ import {
 } from "lucide-react";
 import { api } from "../lib/api";
 
+// IMAGE CHAT TEMPORARILY DISABLED.
+// Change this to true when the backend vision endpoint is ready to go live.
+const IMAGE_CHAT_ENABLED = false;
+
 export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const unavailableMessage =
     "NeXT AI is temporarily unavailable. Please try again in a moment.";
@@ -463,7 +467,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       )}
 
       <form className="ai_match_maker__composer" onSubmit={handleSend}>
-        {selectedImage && (
+        {IMAGE_CHAT_ENABLED && selectedImage && (
           <div className="ai_match_maker__image-preview">
             <img src={selectedImage.previewUrl} alt="Selected upload preview" />
             <span>{selectedImage.file.name}</span>
@@ -490,22 +494,26 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           rows={1}
           aria-label="Message NeXT AI"
         />
-        <input
-          ref={imageInputRef}
-          className="ai_match_maker__image-input"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={chooseImage}
-        />
+        {IMAGE_CHAT_ENABLED && (
+          <input
+            ref={imageInputRef}
+            className="ai_match_maker__image-input"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={chooseImage}
+          />
+        )}
         <div className="ai_match_maker__composer-actions">
-          <button
-            type="button"
-            onClick={() => imageInputRef.current?.click()}
-            aria-label="Upload an image"
-            title="Upload image"
-          >
-            <ImagePlus size={17} />
-          </button>
+          {IMAGE_CHAT_ENABLED && (
+            <button
+              type="button"
+              onClick={() => imageInputRef.current?.click()}
+              aria-label="Upload an image"
+              title="Upload image"
+            >
+              <ImagePlus size={17} />
+            </button>
+          )}
           <label className="ai_match_maker__model-picker">
             <select
               value={selectedModel}
@@ -550,7 +558,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         </div>
         <small>
           {selectionMessage ||
-            "NeXT AI supports text and image conversations."}
+            (IMAGE_CHAT_ENABLED
+              ? "NeXT AI supports text and image conversations."
+              : "NeXT AI currently supports text-based conversations.")}
         </small>
       </form>
     </section>
