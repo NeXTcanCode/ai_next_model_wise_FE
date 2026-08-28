@@ -51,8 +51,8 @@ export default function RankingView({ models = [] }) {
                   <small className="ranking-provider">{model.providerName}</small>
                 )}
                 <ul className="ranking-reasons">
-                  {model.reasons.length ? (
-                    model.reasons.map((reason, reasonIndex) => (
+                  {model.reasons.length > 1 ? (
+                    model.reasons.slice(1).map((reason, reasonIndex) => (
                       <li key={`${reason}-${reasonIndex}`}>{reason}</li>
                     ))
                   ) : (
