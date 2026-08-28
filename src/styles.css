@@ -716,6 +716,9 @@ nav {
 .ai_match_maker__style-picker {
   margin-left: 2px;
 }
+.ai_match_maker__coder-task-picker {
+  margin-left: 2px;
+}
 @media (max-width: 600px) {
   .ai_match_maker__conversation-toolbar {
     right: 16px;

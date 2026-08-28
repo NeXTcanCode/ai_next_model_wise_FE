@@ -78,6 +78,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [answerStyle, setAnswerStyle] = useState("standard");
   const [chatMode, setChatMode] = useState("normal");
+  const [coderTask, setCoderTask] = useState("debug");
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const messageInputRef = useRef(null);
   const imageInputRef = useRef(null);
@@ -334,6 +335,8 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             messages: conversationToSend,
             responseMode,
             answerStyle,
+            chatMode,
+            coderTask: chatMode === "coder" ? coderTask : null,
           }),
         });
       }
@@ -552,6 +555,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
                 className={chatMode === "coder" ? "active" : ""}
                 onClick={() => {
                   setChatMode("coder");
+                  setCoderTask("debug");
                   setAnswerStyle("standard");
                 }}
                 role="tab"
@@ -813,6 +817,23 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             </select>
             <ChevronDown size={16} aria-hidden="true" />
           </label>
+
+          {chatMode === "coder" && (
+            <label className="ai_match_maker__model-picker ai_match_maker__coder-task-picker">
+              <select
+                value={coderTask}
+                onChange={(event) => setCoderTask(event.target.value)}
+                aria-label="Choose coding task"
+              >
+                <option value="debug">Debug</option>
+                <option value="build">Build</option>
+                <option value="review">Review</option>
+                <option value="refactor">Refactor</option>
+                <option value="test">Test</option>
+              </select>
+              <ChevronDown size={16} aria-hidden="true" />
+            </label>
+          )}
 
           <label className="ai_match_maker__model-picker ai_match_maker__style-picker">
             <select
