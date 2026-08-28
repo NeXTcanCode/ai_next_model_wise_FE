@@ -1,11 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
+import Modal from "react-modal";
 import {
   ArrowUp,
   Bot,
   ChevronDown,
+  Copy,
   ImagePlus,
+  Pencil,
+  Plus,
   RotateCcw,
+  Square,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
   X,
 } from "lucide-react";
 import { api } from "../lib/api";
@@ -13,6 +20,40 @@ import { api } from "../lib/api";
 // IMAGE CHAT TEMPORARILY DISABLED.
 // Change this to true when the backend vision endpoint is ready to go live.
 const IMAGE_CHAT_ENABLED = false;
+
+const renderInlineMarkdown = (content, keyPrefix = "part") =>
+  String(content || "")
+    .split(/(\*\*[^*]+\*\*)/g)
+    .map((part, index) =>
+      /^\*\*[^*]+\*\*$/.test(part) ? (
+        <strong key={`${keyPrefix}-bold-${index}`}>{part.slice(2, -2)}</strong>
+      ) : (
+        <React.Fragment key={`${keyPrefix}-text-${index}`}>
+          {part}
+        </React.Fragment>
+      )
+    );
+
+const renderMessageContent = (content) =>
+  String(content || "")
+    .split("\n")
+    .map((line, index, lines) => {
+      const heading = line.match(/^###\s+(.+)$/);
+      const contentNode = heading ? (
+        <span className="ai_match_maker__markdown-heading">
+          {renderInlineMarkdown(heading[1], `heading-${index}`)}
+        </span>
+      ) : (
+        renderInlineMarkdown(line, `line-${index}`)
+      );
+
+      return (
+        <React.Fragment key={`message-line-${index}`}>
+          {contentNode}
+          {index < lines.length - 1 && <br />}
+        </React.Fragment>
+      );
+    });
 
 export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const unavailableMessage =
@@ -22,6 +63,8 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [message, setMessage] = useState("");
   const [models, setModels] = useState([]);
   const [selectedModel, setSelectedModel] = useState("");
+  const [recommendedModelName, setRecommendedModelName] = useState("");
+  const [hasManualModelChoice, setHasManualModelChoice] = useState(false);
   const [responseMode, setResponseMode] = useState(
     () => localStorage.getItem("next_ai_response_mode") || "standard"
   );
@@ -31,6 +74,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [isResponding, setIsResponding] = useState(false);
   const [selectedExcerpt, setSelectedExcerpt] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [responseFeedback, setResponseFeedback] = useState({});
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const [answerStyle, setAnswerStyle] = useState("standard");
+  const [chatMode, setChatMode] = useState("normal");
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false);
   const messageInputRef = useRef(null);
   const imageInputRef = useRef(null);
   const imagePreviewUrlsRef = useRef([]);
@@ -38,6 +86,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const conversationEndRef = useRef(null);
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
+  const requestAbortControllerRef = useRef(null);
   const hour = new Date().getHours();
   const firstName = String(userName || "")
     .trim()
@@ -154,7 +203,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     if (!selectedExcerpt?.text) return;
     setMessage((current) =>
       current
-        ? `${current}${current.endsWith("\n") ? "" : "\n\n"}${selectedExcerpt.text}`
+        ? `${current}${current.endsWith("\n") ? "" : "\n\n"}${
+            selectedExcerpt.text
+          }`
         : selectedExcerpt.text
     );
     setSelectedExcerpt(null);
@@ -166,7 +217,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     });
   };
 
-  const recommendAndSelectModel = async (prompt = message) => {
+  const recommendAndSelectModel = async (prompt = message, signal) => {
     const promptToRecommend = prompt.trim();
     if (!promptToRecommend || isSelectingModel) return null;
     if (lastRecommendedPromptRef.current === promptToRecommend) {
@@ -177,7 +228,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     setIsSelectingModel(true);
     setSelectionMessage("Choosing the best model…");
     try {
-      const data = await api("/api/v1/models");
+      const data = await api("/api/v1/models", { signal });
       const activeModels = (data.models || []).filter(
         (model) => model.isActive !== false
       );
@@ -185,6 +236,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         throw new Error("No active models are available.");
       const recommendation = await api("/api/v1/recommendations", {
         method: "POST",
+        signal,
         body: JSON.stringify({
           prompt: promptToRecommend,
           candidateModelIds: activeModels.map((model) => model.id),
@@ -203,12 +255,17 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         (model) => model.id === recommendedId
       );
       if (recommendedModel) {
+        setRecommendedModelName(recommendedModel.displayName);
+        if (hasManualModelChoice) return recommendedModel;
         selectedModelRef.current = recommendedModel.id;
         setSelectedModel(recommendedModel.id);
-        setSelectionMessage(`${recommendedModel.displayName} selected`);
+        setSelectionMessage(
+          `Recommended model: ${recommendedModel.displayName}`
+        );
       }
       return recommendedModel || null;
     } catch (error) {
+      if (error.name === "AbortError") return null;
       setSelectionMessage(error.message || "Could not choose a model.");
       return null;
     } finally {
@@ -230,18 +287,31 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       imageUrl: imageToSend?.previewUrl || null,
       imageName: imageToSend?.file.name || null,
     };
-    const conversationToSend = [...messages, userMessage]
+    const editingIndex = editingMessageId
+      ? messages.findIndex((item) => item.id === editingMessageId)
+      : -1;
+    const messagesBeforeEdit =
+      editingIndex >= 0 ? messages.slice(0, editingIndex) : messages;
+    const conversationToSend = [...messagesBeforeEdit, userMessage]
       .filter((chatMessage) => !chatMessage.isError)
       .map(({ role, content }) => ({ role, content }));
-    setMessages((current) => [...current, userMessage]);
+    setMessages((current) =>
+      editingIndex >= 0
+        ? [...current.slice(0, editingIndex), userMessage]
+        : [...current, userMessage]
+    );
+    setEditingMessageId(null);
     setSelectedExcerpt(null);
     setMessage("");
     setSelectedImage(null);
     setIsResponding(true);
+    const abortController = new AbortController();
+    requestAbortControllerRef.current = abortController;
     setSelectionMessage(
       imageToSend ? "NeXT is analyzing your image…" : "Getting your response…"
     );
-    if (!imageToSend && !isSelectingModel) recommendAndSelectModel(promptToSend);
+    if (!imageToSend && !isSelectingModel)
+      recommendAndSelectModel(promptToSend, abortController.signal);
     try {
       let data;
       if (imageToSend) {
@@ -252,15 +322,18 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         formData.append("responseMode", responseMode);
         data = await api("/api/v1/chat/image", {
           method: "POST",
+          signal: abortController.signal,
           body: formData,
         });
       } else {
         data = await api("/api/v1/chat", {
           method: "POST",
+          signal: abortController.signal,
           body: JSON.stringify({
             prompt: promptToSend,
             messages: conversationToSend,
             responseMode,
+            answerStyle,
           }),
         });
       }
@@ -283,6 +356,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         setSelectionMessage(`Recommended model: ${selectedModelName}`);
       }
     } catch (error) {
+      if (error.name === "AbortError") return;
       setSelectionMessage("");
       setMessages((current) => [
         ...current,
@@ -301,6 +375,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
         },
       ]);
     } finally {
+      if (requestAbortControllerRef.current === abortController) {
+        requestAbortControllerRef.current = null;
+      }
       setIsResponding(false);
     }
   };
@@ -313,6 +390,29 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       input?.focus();
       input?.setSelectionRange(input.value.length, input.value.length);
     });
+  };
+
+  const copyToClipboard = async (content) => {
+    try {
+      await navigator.clipboard.writeText(String(content || ""));
+      setSelectionMessage("Copied to clipboard");
+    } catch {
+      setSelectionMessage("Could not copy to clipboard");
+    }
+  };
+
+  const editUserMessage = (messageId, content) => {
+    const messageIndex = messages.findIndex((item) => item.id === messageId);
+    if (messageIndex < 0) return;
+    if (isResponding) return;
+    setEditingMessageId(messageId);
+    setMessage(content);
+    setSelectionMessage("Edit your prompt and send it again");
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+  };
+
+  const setHelpfulFeedback = (messageId, helpful) => {
+    setResponseFeedback((current) => ({ ...current, [messageId]: helpful }));
   };
 
   const chooseImage = (event) => {
@@ -334,8 +434,77 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     setSelectionMessage("");
   };
 
+  const startNewChat = () => {
+    if (messages.length) {
+      setShowNewChatConfirm(true);
+      return;
+    }
+    clearChat();
+  };
+
+  const clearChat = () => {
+    setShowNewChatConfirm(false);
+    requestAbortControllerRef.current?.abort();
+    requestAbortControllerRef.current = null;
+    setIsResponding(false);
+    setMessages([]);
+    setMessage("");
+    setSelectedImage(null);
+    setSelectedExcerpt(null);
+    setSelectionMessage("");
+    setIsSelectingModel(false);
+    setEditingMessageId(null);
+    lastRecommendedPromptRef.current = "";
+    messageInputRef.current?.focus();
+  };
+
+  const stopGeneration = () => {
+    requestAbortControllerRef.current?.abort();
+    setSelectionMessage("Generation stopped");
+    setIsResponding(false);
+  };
+
+  useEffect(() => {
+    const handleEscape = (event) => {
+      if (event.key === "Escape" && isResponding) {
+        event.preventDefault();
+        stopGeneration();
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isResponding]);
+
+  const useStarterPrompt = (prompt) => {
+    setMessage(prompt);
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+  };
+
+  const prepareRegeneration = () => {
+    const lastUserMessage = [...messages]
+      .reverse()
+      .find((item) => item.role === "user");
+    if (!lastUserMessage) return;
+    setMessage(lastUserMessage.content);
+    setSelectionMessage("Prompt restored — send to regenerate the response");
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+  };
+
   return (
     <section className="ai_match_maker">
+      {messages.length > 0 && (
+        <div className="ai_match_maker__conversation-toolbar">
+          <button
+            type="button"
+            className="ai_match_maker__new-chat"
+            onClick={startNewChat}
+            aria-label="Start a new chat"
+          >
+            <Plus size={15} />
+            <span>New chat</span>
+          </button>
+        </div>
+      )}
       <div
         ref={conversationRef}
         className="ai_match_maker__conversation"
@@ -353,25 +522,81 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
                 {firstName ? `, ${firstName}` : ""}
               </h2>
             </div>
-            <p>Ask a question, explore an idea, or build something new.</p>
-            {/* <div className="ai_match_maker__welcome-prompts">
-              <button type="button" onClick={() => setMessage("Review my code and suggest improvements")}>Review code</button>
-              <button type="button" onClick={() => setMessage("Explain a difficult concept in simple terms")}>Explain a concept</button>
-              <button type="button" onClick={() => setMessage("Help me analyze this text")}>Analyze text</button>
-              <button type="button" onClick={() => setMessage("Help me write something compelling")}>Write something</button>
-            </div> */}
+            <p>Ask a question, explore an idea, or build something new</p>
+            <small
+              className="ai_match_maker__privacy-note"
+              style={{ color: "#8b8596", fontSize: "9px", display: "block" }}
+            >
+              Private by design - Incognito Mode — we don’t store your NeXT AI
+              chats or prompts
+            </small>
+            <div
+              className="ai_match_maker__mode-tabs"
+              role="tablist"
+              aria-label="NeXT AI mode"
+            >
+              <button
+                type="button"
+                className={chatMode === "normal" ? "active" : ""}
+                onClick={() => {
+                  setChatMode("normal");
+                  setAnswerStyle("standard");
+                }}
+                role="tab"
+                aria-selected={chatMode === "normal"}
+              >
+                Normal mode
+              </button>
+              <button
+                type="button"
+                className={chatMode === "coder" ? "active" : ""}
+                onClick={() => {
+                  setChatMode("coder");
+                  setAnswerStyle("standard");
+                }}
+                role="tab"
+                aria-selected={chatMode === "coder"}
+              >
+                Coder mode
+              </button>
+            </div>
           </div>
         )}
         {messages.map((chatMessage) =>
           chatMessage.role === "user" ? (
-            <div className="ai_match_maker__user-message" key={chatMessage.id}>
-              {chatMessage.imageUrl && (
-                <img
-                  src={chatMessage.imageUrl}
-                  alt={chatMessage.imageName || "Uploaded image"}
-                />
-              )}
-              {chatMessage.content}
+            <div
+              className="ai_match_maker__user-message-wrap"
+              key={chatMessage.id}
+            >
+              <div className="ai_match_maker__user-message">
+                {chatMessage.imageUrl && (
+                  <img
+                    src={chatMessage.imageUrl}
+                    alt={chatMessage.imageName || "Uploaded image"}
+                  />
+                )}
+                {chatMessage.content}
+              </div>
+              <div className="ai_match_maker__message-actions ai_match_maker__user-actions">
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(chatMessage.content)}
+                  aria-label="Copy prompt"
+                  title="Copy prompt"
+                >
+                  <Copy size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    editUserMessage(chatMessage.id, chatMessage.content)
+                  }
+                  aria-label="Edit prompt"
+                  title="Edit prompt"
+                >
+                  <Pencil size={13} />
+                </button>
+              </div>
             </div>
           ) : (
             <article
@@ -386,7 +611,53 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
                 </span>
                 <b>NeXT AI</b>
               </div>
-              <p>{chatMessage.content}</p>
+              <p>{renderMessageContent(chatMessage.content)}</p>
+              {!chatMessage.isError && (
+                <div className="ai_match_maker__message-actions ai_match_maker__response-actions">
+                  <button
+                    type="button"
+                    onClick={() => copyToClipboard(chatMessage.content)}
+                    aria-label="Copy response"
+                    title="Copy response"
+                  >
+                    <Copy size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      responseFeedback[chatMessage.id] === true
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() => setHelpfulFeedback(chatMessage.id, true)}
+                    aria-label="Helpful response"
+                    title="Helpful"
+                  >
+                    <ThumbsUp size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    className={
+                      responseFeedback[chatMessage.id] === false
+                        ? "selected"
+                        : ""
+                    }
+                    onClick={() => setHelpfulFeedback(chatMessage.id, false)}
+                    aria-label="Not helpful response"
+                    title="Not helpful"
+                  >
+                    <ThumbsDown size={13} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={prepareRegeneration}
+                    aria-label="Regenerate response"
+                    title="Regenerate response"
+                  >
+                    <RotateCcw size={13} />
+                  </button>
+                </div>
+              )}
               {chatMessage.retryPrompt && (
                 <button
                   type="button"
@@ -490,7 +761,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
               event.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Message NeXT AI"
+          placeholder="Enter to send · Shift + Enter for a new line · Esc to stop"
           rows={1}
           aria-label="Message NeXT AI"
         />
@@ -517,7 +788,20 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
           <label className="ai_match_maker__model-picker">
             <select
               value={selectedModel}
-              onChange={(event) => setSelectedModel(event.target.value)}
+              onChange={(event) => {
+                const nextModel = event.target.value;
+                setHasManualModelChoice(Boolean(nextModel));
+                setSelectedModel(nextModel);
+                selectedModelRef.current = nextModel;
+                const chosen = models.find((model) => model.id === nextModel);
+                setSelectionMessage(
+                  chosen?.displayName === recommendedModelName
+                    ? `Recommended model: ${chosen.displayName}`
+                    : `Using your selected model: ${
+                        chosen?.displayName || "Selected model"
+                      }`
+                );
+              }}
               aria-label="Select AI model"
             >
               {!models.length && <option value="">Auto</option>}
@@ -529,40 +813,93 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             </select>
             <ChevronDown size={16} aria-hidden="true" />
           </label>
-          <label className="ai_match_maker__model-picker ai_match_maker__length-picker">
+
+          <label className="ai_match_maker__model-picker ai_match_maker__style-picker">
             <select
-              value={responseMode}
+              value={answerStyle}
               onChange={(event) => {
-                setResponseMode(event.target.value);
-                localStorage.setItem(
-                  "next_ai_response_mode",
-                  event.target.value
-                );
+                const nextStyle = event.target.value;
+                setAnswerStyle(nextStyle);
+                setResponseMode(chatMode === "normal" ? nextStyle : "standard");
+                localStorage.setItem("next_ai_response_mode", nextStyle);
               }}
-              aria-label="Response length"
+              aria-label="Answer style"
             >
-              <option value="concise">Concise</option>
-              <option value="standard">Standard</option>
-              <option value="detailed">Detailed</option>
+              {chatMode === "coder" ? (
+                <>
+                  <option value="standard">Standard</option>
+                  <option value="structured">Structured</option>
+                  <option value="code-only">Code only</option>
+                </>
+              ) : (
+                <>
+                  <option value="concise">Concise</option>
+                  <option value="standard">Standard</option>
+                  <option value="detailed">Detailed</option>
+                </>
+              )}
             </select>
             <ChevronDown size={16} aria-hidden="true" />
           </label>
+          {isResponding ? (
+            <button
+              type="button"
+              className="ai_match_maker__send ai_match_maker__stop"
+              onClick={stopGeneration}
+              aria-label="Stop generating"
+              title="Stop generating"
+            >
+              <Square size={13} fill="currentColor" />
+            </button>
+          ) : (
+            <button
+              className="ai_match_maker__send"
+              type="submit"
+              disabled={!message.trim() && !selectedImage}
+              aria-label="Send message"
+            >
+              <ArrowUp size={17} />
+            </button>
+          )}
+        </div>
+        {hasManualModelChoice &&
+          recommendedModelName &&
+          selectedModel &&
+          models.find((model) => model.id === selectedModel)?.displayName !==
+            recommendedModelName && (
+            <span
+              className="ai_match_maker__model-hint"
+              title="NeXT recommended a model for this prompt; you chose to use another model."
+            >
+              Recommended model: {recommendedModelName} · Your selection:{" "}
+              {models.find((model) => model.id === selectedModel)
+                ?.displayName || "Selected model"}
+            </span>
+          )}
+        <small>NeXT AI currently supports text-based conversations.</small>
+      </form>
+      <Modal
+        isOpen={showNewChatConfirm}
+        onRequestClose={() => setShowNewChatConfirm(false)}
+        contentLabel="Confirm new chat"
+        className="new-chat-confirm-card"
+        overlayClassName="new-chat-confirm-overlay"
+      >
+        <h2>Start a new chat?</h2>
+        <p>The current conversation will be cleared.</p>
+        <div className="new-chat-confirm-actions">
           <button
-            className="ai_match_maker__send"
-            type="submit"
-            disabled={(!message.trim() && !selectedImage) || isResponding}
-            aria-label="Send message"
+            type="button"
+            className="secondary"
+            onClick={() => setShowNewChatConfirm(false)}
           >
-            <ArrowUp size={17} />
+            Cancel
+          </button>
+          <button type="button" className="primary" onClick={clearChat}>
+            New chat
           </button>
         </div>
-        <small>
-          {selectionMessage ||
-            (IMAGE_CHAT_ENABLED
-              ? "NeXT AI supports text and image conversations."
-              : "NeXT AI currently supports text-based conversations.")}
-        </small>
-      </form>
+      </Modal>
     </section>
   );
 }

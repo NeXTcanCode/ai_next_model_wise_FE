@@ -66,6 +66,9 @@ export default function Sidebar({
         ))}
       </nav>
       <div className="sidebar-bottom">
+        {/* Weekly usage quota UI temporarily disabled.
+            Quota enforcement and display can be restored in the future. */}
+        {/*
         <div
           className={`usage ${
             usage.percent >= 90
@@ -97,7 +100,7 @@ export default function Sidebar({
                 )} days `
               : "No usage yet"}
           </small>
-          {/* <details className="usage-limits">
+          <details className="usage-limits">
             <summary>Fair usage limits</summary>
             <ol>
               <li>Up to 2 messages per minute</li>
@@ -105,8 +108,9 @@ export default function Sidebar({
               <li>Up to 50 messages per week</li>
               <li>Longer prompts and responses use more of your allowance</li>
             </ol>
-          </details> */}
+          </details>
         </div>
+        */}
         <button className="nav-item" onClick={onLogout}>
           <LogOut size={17} /> Sign out
         </button>

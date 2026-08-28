@@ -144,6 +144,39 @@ nav {
 .ai_match_maker__conversation:has(.ai_match_maker__user-message) {
   justify-content: flex-start;
 }
+.ai_match_maker__conversation-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  position: fixed;
+  right: max(16px, calc((100vw - 248px - 768px) / 2));
+  bottom: 155px;
+  z-index: 11;
+  width: auto;
+  min-height: 30px;
+}
+.ai_match_maker__new-chat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: #28233a;
+  color: #fff;
+  cursor: pointer;
+  font: 500 11px "DM Sans";
+  transition: background 0.18s, transform 0.18s;
+}
+.ai_match_maker__new-chat:hover {
+  background: #39314f;
+  transform: translateY(-1px);
+}
+.ai_match_maker__new-chat:focus-visible {
+  outline: 2px solid #8a79ef;
+  outline-offset: 2px;
+}
 .ai_match_maker__add-to-chat {
   position: fixed;
   z-index: 30;
@@ -157,11 +190,22 @@ nav {
   cursor: pointer;
   animation: next-add-to-chat-in 0.12s ease-out;
 }
-.ai_match_maker__add-to-chat:hover { background: #38333d; }
-.ai_match_maker__add-to-chat:focus-visible { outline: 2px solid #8a79ef; outline-offset: 2px; }
+.ai_match_maker__add-to-chat:hover {
+  background: #38333d;
+}
+.ai_match_maker__add-to-chat:focus-visible {
+  outline: 2px solid #8a79ef;
+  outline-offset: 2px;
+}
 @keyframes next-add-to-chat-in {
-  from { opacity: 0; transform: translateY(-3px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .ai_match_maker__welcome {
   flex: 0 0 auto;
@@ -244,7 +288,90 @@ nav {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-.ai_match_maker__response p { max-width: 100%; margin-right: 0; overflow-wrap: anywhere; word-break: break-word; }
+.ai_match_maker__response p {
+  max-width: 100%;
+  margin-right: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+.ai_match_maker__user-message-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  width: 100%;
+}
+.ai_match_maker__message-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.ai_match_maker__user-message-wrap:hover .ai_match_maker__message-actions,
+.ai_match_maker__response:hover .ai_match_maker__message-actions,
+.ai_match_maker__message-actions:focus-within {
+  opacity: 1;
+}
+.ai_match_maker__message-actions button {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #928c9e;
+  cursor: pointer;
+}
+.ai_match_maker__message-actions button:hover,
+.ai_match_maker__message-actions button.selected {
+  background: #f0edff;
+  color: #6857d8;
+}
+.ai_match_maker__response-actions {
+  justify-content: flex-start;
+}
+.ai_match_maker__shortcut-help {
+  opacity: 0.8;
+}
+.ai_match_maker__response p strong {
+  color: #28233a;
+  font-weight: 700;
+}
+.ai_match_maker__markdown-heading {
+  display: block;
+  margin: 18px 0 7px;
+  color: #28233a;
+  font: 700 17px/1.3 "Space Grotesk";
+}
+.ai_match_maker__mode-tabs {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 18px;
+  padding: 3px;
+  border: 1px solid #e5e1ed;
+  border-radius: 9px;
+  background: #faf9fd;
+}
+.ai_match_maker__mode-tabs button {
+  padding: 7px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #8b8596;
+  cursor: pointer;
+  font: 500 11px "DM Sans";
+}
+.ai_match_maker__mode-tabs button.active {
+  background: #eeeaff;
+  color: #5e4dcc;
+  font-weight: 600;
+}
+.ai_match_maker__response p > .ai_match_maker__markdown-heading:first-child {
+  margin-top: 0;
+}
 .ai_match_maker__response--error {
   color: #9f3f4b;
 }
@@ -261,7 +388,11 @@ nav {
   font: 600 11px "DM Sans";
   cursor: pointer;
 }
-.ai_match_maker__retry:hover { border-color: #bdb3e8; background: #f8f6ff; color: #5c4bcf; }
+.ai_match_maker__retry:hover {
+  border-color: #bdb3e8;
+  background: #f8f6ff;
+  color: #5c4bcf;
+}
 .ai_match_maker__response-identity {
   display: flex;
   align-items: center;
@@ -418,7 +549,7 @@ nav {
   width: min(768px, 100%);
   position: relative;
   flex: 0 0 auto;
-  z-index: 5;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   isolation: isolate;
@@ -429,7 +560,9 @@ nav {
   box-shadow: 0 12px 36px rgba(51, 38, 93, 0.18),
     0 2px 8px rgba(51, 38, 93, 0.08);
 }
-.ai_match_maker__image-input { display: none; }
+.ai_match_maker__image-input {
+  display: none;
+}
 .ai_match_maker__image-preview {
   display: grid;
   grid-template-columns: 46px minmax(0, 1fr) 26px;
@@ -467,7 +600,10 @@ nav {
   color: #8f8899;
   cursor: pointer;
 }
-.ai_match_maker__image-preview button:hover { background: #eeeaf5; color: #4c4657; }
+.ai_match_maker__image-preview button:hover {
+  background: #eeeaf5;
+  color: #4c4657;
+}
 .ai_match_maker__composer textarea {
   background: #ffffff;
   color: #2f293a;
@@ -481,7 +617,7 @@ nav {
   overscroll-behavior: contain;
   scrollbar-width: thin;
   padding: 1px 2px;
-  font: 16px/1.5 "DM Mono", "SFMono-Regular", Consolas, monospace;
+  font: 14px/1.5 "DM Mono", "SFMono-Regular", Consolas, monospace;
   letter-spacing: -0.02em;
 }
 .ai_match_maker__composer textarea:focus {
@@ -489,12 +625,26 @@ nav {
   box-shadow: none;
 }
 .ai_match_maker__composer-actions {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 5px;
   margin-top: 8px;
   background: #ffffff;
   min-width: 0;
+}
+.ai_match_maker__model-hint {
+  /* position: absolute; */
+  margin: auto;
+  /* right: 42px;
+  bottom: -19px; */
+  /* max-width: 260px; */
+  overflow: hidden;
+  color: #9a94a5;
+  font: 10px/1.2 "DM Sans";
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 .ai_match_maker__composer-actions button {
   border: 0;
@@ -515,6 +665,14 @@ nav {
   margin-left: auto;
   background: #28233a;
   color: #fff;
+}
+.ai_match_maker__composer-actions .ai_match_maker__stop {
+  background: #f1eef8;
+  color: #5f5672;
+}
+.ai_match_maker__composer-actions .ai_match_maker__stop:hover {
+  background: #e8e3f3;
+  color: #403755;
 }
 .ai_match_maker__composer-actions .ai_match_maker__send:disabled {
   background: #e5e2e8;
@@ -555,7 +713,18 @@ nav {
 .ai_match_maker__length-picker select {
   max-width: 105px;
 }
+.ai_match_maker__style-picker {
+  margin-left: 2px;
+}
 @media (max-width: 600px) {
+  .ai_match_maker__conversation-toolbar {
+    right: 16px;
+    bottom: 155px;
+  }
+  .ai_match_maker__model-hint {
+    right: 38px;
+    max-width: 180px;
+  }
   .ai_match_maker {
     padding-right: 16px;
     padding-left: 16px;
@@ -566,7 +735,7 @@ nav {
   }
   .ai_match_maker__composer-actions {
     display: grid;
-    grid-template-columns: 30px minmax(0, 1fr) 94px 34px;
+    grid-template-columns: minmax(0, 1fr) 84px 88px 34px;
     gap: 4px;
     width: 100%;
   }
@@ -577,11 +746,18 @@ nav {
     margin: 0;
   }
   .ai_match_maker__model-picker,
-  .ai_match_maker__length-picker {
+  .ai_match_maker__length-picker,
+  .ai_match_maker__style-picker {
     width: 100%;
     max-width: 100%;
     margin-left: 0;
     overflow: hidden;
+  }
+  .ai_match_maker__model-picker {
+    justify-content: flex-start;
+  }
+  .ai_match_maker__length-picker {
+    justify-content: flex-end;
   }
   .ai_match_maker__model-picker select,
   .ai_match_maker__length-picker select {
@@ -1280,6 +1456,9 @@ textarea:focus {
   display: none;
 }
 @media (max-width: 1191px) {
+  .ai_match_maker__conversation-toolbar {
+    right: max(16px, calc((100vw - 768px) / 2));
+  }
   .app-shell {
     height: auto;
     min-height: 100vh;
@@ -1287,7 +1466,7 @@ textarea:focus {
   }
   .sidebar {
     position: fixed;
-    z-index: 5;
+    z-index: 30;
     height: 100vh;
     left: -260px;
     transition: left 0.2s;
@@ -1486,6 +1665,115 @@ textarea:focus {
   padding: 24px;
   background: rgb(28 24 52 / 48%);
   backdrop-filter: blur(4px);
+}
+.new-chat-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(40 35 58 / 42%);
+  backdrop-filter: blur(7px);
+}
+.new-chat-confirm-card {
+  width: min(100%, 460px);
+  padding: 28px;
+  border: 1px solid #e7e2f3;
+  border-radius: 18px;
+  outline: none;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(42 31 91 / 22%), 0 2px 8px rgb(42 31 91 / 8%);
+}
+.new-chat-confirm-card h2 {
+  margin: 0 0 8px;
+  color: #28233a;
+  font: 700 22px/1.25 "DM Sans";
+}
+.new-chat-confirm-card p {
+  margin: 0;
+  color: #858197;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.new-chat-confirm-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  justify-content: flex-end;
+}
+.new-chat-confirm-actions button {
+  width: auto;
+  min-width: 92px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 9px;
+  font: 600 14px "DM Sans";
+  transition: background 0.18s ease, border-color 0.18s ease,
+    box-shadow 0.18s ease, transform 0.18s ease;
+  cursor: pointer;
+}
+.new-chat-confirm-actions .secondary {
+  min-width: 0;
+  border: 1px solid #d9d6df;
+  background: #fff;
+  color: #4b4656;
+}
+.new-chat-confirm-actions .secondary:hover {
+  background: #faf9fc;
+}
+.new-chat-confirm-actions .primary {
+  border: 1px solid #5d4bd0;
+  background: linear-gradient(135deg, #7462e5, #5f4dd1);
+  color: #fff;
+  box-shadow: 0 12px 24px rgb(104 87 216 / 16%);
+  margin-top: unset !important;
+}
+.new-chat-confirm-actions .primary:hover {
+  background: #5545bd;
+  box-shadow: 0 5px 12px rgb(98 82 212 / 24%);
+}
+.new-chat-confirm-actions button:active {
+  transform: translateY(1px);
+}
+.new-chat-confirm-actions button:focus-visible {
+  outline: 3px solid rgb(98 82 212 / 24%);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .new-chat-confirm-overlay {
+    padding: 16px;
+  }
+
+  .new-chat-confirm-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .new-chat-confirm-card h2 {
+    font-size: 20px;
+  }
+
+  .new-chat-confirm-card p {
+    font-size: 14px;
+  }
+
+  .new-chat-confirm-actions {
+    gap: 8px;
+    margin-top: 22px;
+  }
+
+  .new-chat-confirm-actions button {
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 9px;
+    font-size: 13px;
+  }
+
+  .new-chat-confirm-actions .secondary {
+    min-width: 0;
+  }
 }
 .modal-card {
   position: relative;
