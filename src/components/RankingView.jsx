@@ -33,13 +33,14 @@ export default function RankingView({ models = [] }) {
           rankedModels.map((model, index) => (
             <article
               className={
-                model.isRecommended
-                  ? "ranking-row recommended"
-                  : "ranking-row"
+                model.isRecommended ? "ranking-row recommended" : "ranking-row"
               }
               key={`${model.id || model.displayName}-${index}`}
             >
-              <span className="ranking-position" aria-label={`Rank ${model.rank}`}>
+              <span
+                className="ranking-position"
+                aria-label={`Rank ${model.rank}`}
+              >
                 {model.rank}
               </span>
               <div className="ranking-copy">
@@ -48,9 +49,11 @@ export default function RankingView({ models = [] }) {
                   {model.isRecommended && <span>Recommended</span>}
                 </div>
                 {model.providerName && (
-                  <small className="ranking-provider">{model.providerName}</small>
+                  <small className="ranking-provider">
+                    {model.providerName}
+                  </small>
                 )}
-                <ul className="ranking-reasons">
+                {/* <ul className="ranking-reasons">
                   {model.reasons.length > 1 ? (
                     model.reasons.slice(1).map((reason, reasonIndex) => (
                       <li key={`${reason}-${reasonIndex}`}>{reason}</li>
@@ -58,7 +61,7 @@ export default function RankingView({ models = [] }) {
                   ) : (
                     <li>No scoring explanation was returned.</li>
                   )}
-                </ul>
+                </ul> */}
               </div>
               <div className="ranking-metrics">
                 <span className="confidence-pill">{fitLabel(model.score)}</span>
