@@ -78,8 +78,17 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         </small>
       </div>
       <span className="auth-note">
-        Built by <a href="https://github.com/NeXTcanCode" target="_blank" rel="noreferrer">@NeXTcanCode</a>
-        <span className="auth-note-badge">GitHub</span>
+        Built by{" "}
+        <a
+          // href="https://github.com/NeXTcanCode"
+          href="https://www.linkedin.com/in/vikas-sinha-7171aa75/"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {/* @NeXTcanCode */}
+          Vikas Sinha
+        </a>
+        <span className="auth-note-badge">LinkedIn</span>
       </span>
     </div>
   );

@@ -737,7 +737,7 @@ nav {
     max-width: 100%;
   }
   .ai_match_maker__composer-actions {
-    display: grid;
+    /* display: grid; */
     grid-template-columns: minmax(0, 1fr) 84px 88px 34px;
     gap: 4px;
     width: 100%;
