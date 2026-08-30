@@ -4,8 +4,11 @@ import { api } from "../lib/api";
 
 export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
   const [register, setRegister] = useState(false);
+  const [pending, setPending] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const submit = async () => {
+    if (pending) return;
+    setPending(true);
     setErrorMessage("");
     try {
       const data = await api(
@@ -16,6 +19,8 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
       onLogin(data.user);
     } catch (error) {
       setErrorMessage(error.message);
+    } finally {
+      setPending(false);
     }
   };
   return (
@@ -67,13 +72,25 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
           />
         </label>
         {errorMessage && <p className="error-message">{errorMessage}</p>}
-        <button className="primary" onClick={submit}>
-          {register ? "Create account" : "Continue"} <ArrowRight size={17} />
+        <button className="primary" onClick={submit} disabled={pending}>
+          {pending
+            ? register
+              ? "Creating your account…"
+              : "Signing you in…"
+            : register
+              ? "Create account"
+              : "Continue"} <ArrowRight size={17} />
         </button>
         <small className="auth-foot">
           {register ? "Already have an account?" : "New to modelwise?"}{" "}
-          <button onClick={() => setRegister(!register)}>
-            {register ? "Sign in" : "Create an account"}
+          <button onClick={() => setRegister(!register)} disabled={pending}>
+            {pending
+              ? register
+                ? "Creating account…"
+                : "Signing in…"
+              : register
+                ? "Sign in"
+                : "Create an account"}
           </button>
         </small>
       </div>

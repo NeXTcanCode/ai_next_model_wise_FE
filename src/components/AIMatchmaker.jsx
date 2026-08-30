@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { api } from "../lib/api";
+import BrowserVoiceInput from "./BrowserVoiceInput";
 
 // IMAGE CHAT TEMPORARILY DISABLED.
 // Change this to true when the backend vision endpoint is ready to go live.
@@ -72,6 +73,8 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [selectionMessage, setSelectionMessage] = useState("");
   const [messages, setMessages] = useState([]);
   const [isResponding, setIsResponding] = useState(false);
+  const [isVoiceListening, setIsVoiceListening] = useState(false);
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [selectedExcerpt, setSelectedExcerpt] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [responseFeedback, setResponseFeedback] = useState({});
@@ -88,6 +91,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const selectedModelRef = useRef("");
   const lastRecommendedPromptRef = useRef("");
   const requestAbortControllerRef = useRef(null);
+  const composerHints = [
+    "Enter to send · Shift + Enter for a new line · Esc to stop",
+    "Click New Chat to open a fresh conversation",
+    "Push to talk using the microphone",
+  ];
   const hour = new Date().getHours();
   const firstName = String(userName || "")
     .trim()
@@ -128,6 +136,14 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     input.style.overflowY =
       input.scrollHeight > maximumHeight ? "auto" : "hidden";
   }, [message]);
+
+  useEffect(() => {
+    if (message || isVoiceListening || isResponding) return undefined;
+    const timer = window.setInterval(() => {
+      setPlaceholderIndex((current) => (current + 1) % composerHints.length);
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [message, isVoiceListening, isResponding, composerHints.length]);
 
   useEffect(() => {
     conversationEndRef.current?.scrollIntoView({
@@ -342,11 +358,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       }
       setMessages((current) => [
         ...current,
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: data.response || "No response was returned.",
-        },
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: data.response || "No response was returned.",
+          },
       ]);
       onUsageRefresh?.();
       // setSelectionMessage(`Response from ${data.provider}`);
@@ -765,7 +781,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
               event.currentTarget.form?.requestSubmit();
             }
           }}
-          placeholder="Enter to send · Shift + Enter for a new line · Esc to stop"
+          placeholder={
+            message || isVoiceListening || isResponding
+              ? ""
+              : composerHints[placeholderIndex]
+          }
           rows={1}
           aria-label="Message NeXT AI"
         />
@@ -778,7 +798,16 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             onChange={chooseImage}
           />
         )}
-        <div className="ai_match_maker__composer-actions">
+          <div className="ai_match_maker__composer-actions">
+          <BrowserVoiceInput
+            disabled={isResponding}
+            onListeningChange={setIsVoiceListening}
+            onTranscript={(transcript) =>
+              setMessage((current) =>
+                current ? `${current} ${transcript}` : transcript
+              )
+            }
+          />
           {IMAGE_CHAT_ENABLED && (
             <button
               type="button"
