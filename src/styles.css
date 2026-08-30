@@ -422,7 +422,8 @@ nav {
   flex: 0 0 auto;
   align-self: flex-end;
   max-width: min(620px, 85%);
-  margin: 0 0 24px auto;
+  /* margin: 0 0 24px auto; */
+  margin: 0 0 5px auto;
   padding: 11px 15px;
   border-radius: 18px;
   background: #f0edff;
@@ -628,8 +629,14 @@ nav {
   animation: composer-placeholder-fade 0.45s ease;
 }
 @keyframes composer-placeholder-fade {
-  from { opacity: 0; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 .ai_match_maker__composer-actions {
   position: relative;
@@ -679,12 +686,42 @@ nav {
   color: #5f4dd1;
 }
 .browser-voice-input span {
-  max-width: 180px;
+  /* max-width: 180px; */
   overflow: hidden;
   color: #8f8899;
   font-size: 10px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.browser-voice-input__notice {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 10px);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 10px 10px 10px 13px;
+  border: 1px solid #e3ddf5;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 26px rgb(42 31 91 / 14%);
+  color: #625a78;
+  font: 11px/1.35 "DM Sans";
+}
+.browser-voice-input__notice button {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  color: #8d879c;
+  font-size: 18px;
+  line-height: 1;
+}
+.browser-voice-input__notice button:hover {
+  color: #4d4561;
+  background: #f3f1f8;
 }
 .ai_match_maker__composer-actions .ai_match_maker__send {
   margin-left: auto;
