@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -12,6 +12,9 @@ import Models from "./components/Models";
 import RankingView from "./components/RankingView";
 import Recommend from "./components/Recommend";
 import Sidebar from "./components/Sidebar";
+import NextAISidebar from "./components/NextAISidebar";
+import SkillPage from "./components/skills/SkillPage";
+import SkillsPage from "./components/skills/SkillsPage";
 import StatusSummary from "./components/StatusSummary";
 import { api } from "./lib/api";
 import {
@@ -50,14 +53,29 @@ function Shell({
   onUsageRefresh,
   onBackToRecommend,
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSkill = ["/summarise", "/rewrite", "/explain", "/translate", "/debug", "/generate-tests"].includes(location.pathname) || location.pathname.startsWith("/skills/");
+  const isNextAI = location.pathname === "/next_ai" || isSkill;
+  const changeView = (nextView) => {
+    const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;
+    setView(nextView);
+    navigate(path);
+  };
   return (
     <div className="app-shell">
-      <Sidebar
+      {isNextAI ? <NextAISidebar
+        activeChatId={null}
+        onSelectChat={(id) => window.dispatchEvent(new CustomEvent("next-ai:select", { detail: id }))}
+        onNewChat={() => window.dispatchEvent(new Event("next-ai:new"))}
+        onSkill={(prompt) => window.dispatchEvent(new CustomEvent("next-ai:skill", { detail: prompt }))}
+          onBack={() => changeView("recommend")}
+      /> : <Sidebar
         user={user}
         menu={menu}
         setMenu={setMenu}
         view={view}
-        setView={setView}
+          setView={changeView}
         usage={usage}
         rankedModels={rankedModels}
         onLogout={async () => {
@@ -66,7 +84,7 @@ function Shell({
           localStorage.removeItem("modelwise_user");
           dispatch(clearUser());
         }}
-      />
+        />}
       <main>
         <header>
           <button className="mobile-menu" onClick={() => setMenu(!menu)}>
@@ -100,8 +118,8 @@ function Shell({
             </button>
           </div>
         </header>
-        {view === "bot" ? (
-          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} onBackToRecommend={onBackToRecommend} />
+        {location.pathname === "/skills" ? <SkillsPage /> : isSkill ? <SkillPage /> : view === "bot" ? (
+          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} onBackToRecommend={() => changeView("recommend")} />
         ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}
@@ -146,7 +164,7 @@ function App() {
   const dispatch = useDispatch();
   const [view, setView] = useState(() => {
     const path = window.location.pathname;
-    return path === "/ranking" ? "ranking" : path === "/next_ai" ? "bot" : path === "/history" ? "history" : path === "/models" ? "models" : "recommend";
+    return path === "/ranking" ? "ranking" : path === "/next_ai" ? "bot" : path === "/history" ? "history" : path === "/models" ? "models" : path === "/skills" ? "skills" : "recommend";
   });
   const navigateView = (nextView) => {
     const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;

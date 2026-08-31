@@ -6,7 +6,6 @@ import Composer from "./aimatchmaker/Composer";
 import NewChatModal from "./aimatchmaker/NewChatModal";
 import SelectionAction from "./aimatchmaker/SelectionAction";
 import WelcomeState from "./aimatchmaker/WelcomeState";
-import NextAISidebar from "./NextAISidebar";
 
 // IMAGE CHAT TEMPORARILY DISABLED.
 // Change this to true when the backend vision endpoint is ready to go live.
@@ -80,6 +79,10 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
         setSelectedModel((current) => current || availableModels[0]?.id || "");
       })
       .catch(() => setModels([]));
+  }, []);
+  useEffect(() => {
+    const prompt = sessionStorage.getItem("next_ai_skill_prompt");
+    if (prompt) { setMessage(prompt); sessionStorage.removeItem("next_ai_skill_prompt"); }
   }, []);
 
   useEffect(() => {
@@ -489,6 +492,20 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
     window.requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
+  useEffect(() => {
+    const select = (event) => openChat(event.detail);
+    const fresh = () => clearChat();
+    const skill = (event) => useSkill(event.detail);
+    window.addEventListener("next-ai:select", select);
+    window.addEventListener("next-ai:new", fresh);
+    window.addEventListener("next-ai:skill", skill);
+    return () => {
+      window.removeEventListener("next-ai:select", select);
+      window.removeEventListener("next-ai:new", fresh);
+      window.removeEventListener("next-ai:skill", skill);
+    };
+  });
+
   const prepareRegeneration = () => {
     const lastUserMessage = [...messages]
       .reverse()
@@ -501,7 +518,6 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
 
   return (
     <section className="ai_match_maker next-ai-workspace">
-      <NextAISidebar activeChatId={conversationId} onSelectChat={openChat} onNewChat={clearChat} onSkill={useSkill} onBack={onBackToRecommend} />
       {messages.length > 0 && <div className="ai_match_maker__conversation-toolbar"><button type="button" className="ai_match_maker__new-chat" onClick={startNewChat} aria-label="Start a new chat"><Plus size={15} /><span>New chat</span></button></div>}
       <div ref={conversationRef} className="ai_match_maker__conversation" onMouseUp={showSelectionAction} onTouchEnd={showSelectionAction}>
         {!messages.length && !isResponding && <WelcomeState greeting={timeGreeting} firstName={firstName} chatMode={chatMode} setChatMode={setChatMode} setAnswerStyle={setAnswerStyle} />}

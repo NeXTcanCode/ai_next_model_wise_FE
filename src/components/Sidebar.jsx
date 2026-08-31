@@ -24,6 +24,7 @@ export default function Sidebar({
     ["history", History, "History"],
     ["models", Settings2, "My models"],
     ["ranking", Trophy, "Ranking"],
+    ["skills", Sparkles, "Skills"],
     ["bot", Bot, "NeXT AI"],
   ];
 
