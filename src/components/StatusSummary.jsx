@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loadExchangeRates } from "../store";
 
-export default function StatusSummary({ tokens, cost }) {
+export default function StatusSummary({ tokens, cost, label = "history tokens", emptyLabel = "Recommendation history", sublabel = null }) {
   const dispatch = useDispatch();
   const currency = useSelector((state) => state.currency.selected);
   const rates = useSelector((state) => state.currency.rates);
@@ -26,8 +26,8 @@ export default function StatusSummary({ tokens, cost }) {
     <div className="status-summary">
       <span className="status-dot" />
       <div>
-        <b>{tokens ? `${tokens.toLocaleString()} history tokens` : "Recommendation history"}</b>
-        <small>{formattedCost ? `Total estimated cost: ${formattedCost}` : "No recommendations yet"}</small>
+        <b>{tokens ? `${tokens.toLocaleString()} ${label}` : emptyLabel}</b>
+        <small>{formattedCost ? `Total estimated cost: ${formattedCost}` : (sublabel || "No recommendations yet")}</small>
       </div>
     </div>
   );

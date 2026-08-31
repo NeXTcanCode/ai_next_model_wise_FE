@@ -1556,6 +1556,8 @@ textarea:focus {
   min-height: 0;
 }
 .next-ai-sidebar {
+  display: flex;
+  flex-direction: column;
   width: 230px;
   flex: 0 0 230px;
   overflow-y: auto;
@@ -1563,6 +1565,22 @@ textarea:focus {
   border-right: 1px solid #eeeaf4;
   background: #fcfbfe;
 }
+.next-ai-sidebar__logout {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: auto;
+  padding: 16px 8px 4px;
+  border: 0;
+  background: transparent;
+  color: #8f899e;
+  cursor: pointer;
+  text-align: left;
+  font: 13px "DM Sans";
+}
+.next-ai-sidebar__logout:hover { color: #5d4dca; }
+.next-ai-sidebar__usage { margin: 18px 7px 0; padding: 9px 0; border: 0; background: transparent; color: #6958d2; cursor: pointer; text-align: left; font: 11px "DM Sans"; }
 .next-ai-sidebar__back,
 .next-ai-sidebar__new,
 .next-ai-sidebar__section button {
@@ -2662,6 +2680,53 @@ textarea:focus {
 .empty-history {
   color: #9994a5;
   font-size: 12px;
+}
+.next-ai-history {
+  max-width: 1080px;
+  margin: 34px auto;
+  padding: 34px 40px 40px;
+}
+.next-ai-history__back { display: flex; align-items: center; gap: 7px; width: max-content; margin-bottom: 14px; padding: 0; border: 0; background: transparent; color: #6c5bd5; cursor: pointer; font: 12px "DM Sans"; }
+.next-ai-history .page-intro { margin-bottom: 28px; }
+.next-ai-history h2 { margin: 7px 0 5px; color: #302942; font: 700 30px "Space Grotesk"; }
+.next-ai-history .page-intro p { margin: 0; color: #9691a4; font-size: 13px; }
+.next-ai-history .history-controls { display: flex; gap: 8px; }
+.next-ai-history .history-controls select {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid #ded9ea;
+  border-radius: 8px;
+  outline: 0;
+  background: #fff;
+  color: #625b73;
+  font: 12px "DM Sans";
+}
+.next-ai-history__cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+.next-ai-history__cards > div { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: center; padding: 18px; border: 1px solid #eeeaf4; border-radius: 12px; background: #fff; }
+.next-ai-history__cards svg { grid-row: span 2; color: #7060d7; }
+.next-ai-history__cards small { color: #aaa5b5; font: 9px "DM Mono"; letter-spacing: .08em; }
+.next-ai-history__cards b { margin-top: 5px; color: #403a50; font: 600 22px "Space Grotesk"; }
+.next-ai-history__pricing { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; padding: 16px 18px; border: 1px solid #e5e0f1; border-radius: 12px; background: #f8f6ff; color: #6d6680; }
+.next-ai-history__pricing > svg { flex: 0 0 auto; color: #7462e5; }
+.next-ai-history__pricing > div { display: grid; gap: 4px; flex: 1; }
+.next-ai-history__pricing b { color: #40358d; font-size: 13px; }
+.next-ai-history__pricing span { color: #89829a; font-size: 11px; }
+.next-ai-history__pricing label { display: grid; gap: 5px; color: #817a91; font: 10px "DM Mono"; white-space: nowrap; }
+.next-ai-history__pricing input { width: 105px; min-height: 36px; padding: 8px 10px; border: 1px solid #dcd6ee; border-radius: 7px; background: #fff; color: #443b55; font: 13px "DM Sans"; }
+.next-ai-history__chart { padding: 20px; border: 1px solid #eeeaf4; border-radius: 12px; background: #fff; }
+.next-ai-history__chart h3 { margin: 0 0 18px; color: #403a50; font: 600 16px "Space Grotesk"; }
+.next-ai-history__chart > p { margin: 0; color: #9994a5; font-size: 12px; }
+.next-ai-history__bar { display: grid; grid-template-columns: 120px 1fr 80px; gap: 12px; align-items: center; margin: 12px 0; color: #716b7d; font-size: 11px; }
+.next-ai-history__bar > div { height: 10px; overflow: hidden; border-radius: 8px; background: #f0eef7; }
+.next-ai-history__bar i { display: block; height: 100%; border-radius: 8px; background: linear-gradient(90deg, #8b7bea, #6553d5); }
+.next-ai-history__bar b { color: #5d50c9; text-align: right; font: 10px "DM Mono"; }
+@media (max-width: 760px) {
+  .next-ai-history { margin: 20px 16px; padding: 24px 18px; }
+  .next-ai-history .page-intro { align-items: flex-start; flex-direction: column; }
+  .next-ai-history__cards { grid-template-columns: 1fr; }
+  .next-ai-history__pricing { align-items: stretch; flex-wrap: wrap; }
+  .next-ai-history__pricing > div { flex-basis: 100%; }
+  .next-ai-history__bar { grid-template-columns: 90px 1fr 64px; gap: 7px; }
 }
 @media (max-width: 700px) {
   .panel-heading .hint {

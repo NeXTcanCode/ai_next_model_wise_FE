@@ -15,6 +15,7 @@ import Sidebar from "./components/Sidebar";
 import NextAISidebar from "./components/NextAISidebar";
 import SkillPage from "./components/skills/SkillPage";
 import SkillsPage from "./components/skills/SkillsPage";
+import NextAIUsageHistory from "./components/NextAIUsageHistory";
 import StatusSummary from "./components/StatusSummary";
 import { api } from "./lib/api";
 import {
@@ -56,7 +57,11 @@ function Shell({
   const location = useLocation();
   const navigate = useNavigate();
   const isSkill = ["/summarise", "/rewrite", "/explain", "/translate", "/debug", "/generate-tests"].includes(location.pathname) || location.pathname.startsWith("/skills/");
-  const isNextAI = location.pathname === "/next_ai" || isSkill;
+  const isNextAIHistory = location.pathname === "/next_ai/history";
+  const isNextAI = location.pathname === "/next_ai" || isSkill || isNextAIHistory;
+  const currentView = location.pathname === "/skills" ? "skills" : view;
+  const [nextAIUsage, setNextAIUsage] = useState({ tokens: 0, messages: 0 });
+  useEffect(() => { if (!isNextAI) return; api("/api/v1/usage/history?days=7").then((data) => setNextAIUsage((data.events || []).reduce((total, event) => ({ tokens: total.tokens + (event.inputTokens || 0) + (event.outputTokens || 0), messages: total.messages + 1 }), { tokens: 0, messages: 0 }))).catch(() => {}); }, [isNextAI]);
   const changeView = (nextView) => {
     const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;
     setView(nextView);
@@ -70,11 +75,17 @@ function Shell({
         onNewChat={() => window.dispatchEvent(new Event("next-ai:new"))}
         onSkill={(prompt) => window.dispatchEvent(new CustomEvent("next-ai:skill", { detail: prompt }))}
           onBack={() => changeView("recommend")}
+          onLogout={async () => {
+            await api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
+            localStorage.removeItem("modelwise_session");
+            localStorage.removeItem("modelwise_user");
+            dispatch(clearUser());
+          }}
       /> : <Sidebar
         user={user}
         menu={menu}
         setMenu={setMenu}
-        view={view}
+        view={currentView}
           setView={changeView}
         usage={usage}
         rankedModels={rankedModels}
@@ -91,34 +102,43 @@ function Shell({
             <span aria-hidden>☰</span>
           </button>
           <div>
+            {isNextAIHistory && <button type="button" className="next-ai-history__back" onClick={() => navigate("/next_ai")}>← Back to NeXT AI</button>}
             <span className="eyebrow">
-              {view === "recommend"
+              {currentView === "recommend"
                 ? "WORKSPACE / RECOMMEND"
-                : `WORKSPACE / ${view.toUpperCase()}`}
+                : `WORKSPACE / ${currentView.toUpperCase()}`}
             </span>
             <h1>
-              {view === "recommend"
+              {currentView === "recommend"
                 ? "Find your best model"
-                : view === "history"
+                : currentView === "history"
                 ? "Recommendation history"
-              : view === "ranking"
+              : currentView === "ranking"
               ? "Model ranking"
-              : view === "bot"
+              : currentView === "skills"
+              ? "Skills"
+              : currentView === "bot"
               ? "NeXT AI"
               : "My models"}
             </h1>
           </div>
           <div className="header-actions">
-            <StatusSummary
-              tokens={historyTotals.tokens}
-              cost={historyTotals.cost}
-            />
-            <button className="text-button" onClick={() => setView("history")}>
-              View history
-            </button>
+            {/* NeXT AI usage summary is intentionally held for a better UX decision.
+                Restore this block when the usage presentation is finalized. */}
+            {!isNextAI && <>
+              <StatusSummary
+                tokens={historyTotals.tokens}
+                cost={historyTotals.cost}
+                label="recommendation tokens"
+                emptyLabel="Recommendation history"
+              />
+              <button className="text-button" onClick={() => changeView("history")}>
+                View history
+              </button>
+            </>}
           </div>
         </header>
-        {location.pathname === "/skills" ? <SkillsPage /> : isSkill ? <SkillPage /> : view === "bot" ? (
+        {location.pathname === "/skills" ? <SkillsPage /> : isNextAIHistory ? <NextAIUsageHistory /> : isSkill ? <SkillPage /> : view === "bot" ? (
           <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} onBackToRecommend={() => changeView("recommend")} />
         ) : view === "recommend" ? (
           <Recommend
