@@ -62,6 +62,7 @@ function Shell({
         onLogout={async () => {
           await api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
           localStorage.removeItem("modelwise_session");
+          localStorage.removeItem("modelwise_user");
           dispatch(clearUser());
         }}
       />
@@ -157,7 +158,7 @@ function App() {
   const [usage, setUsage] = useState({ usedUnits: 0, limitUnits: 40000, percent: 0, resetAt: null });
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
   const [isRecommending, setIsRecommending] = useState(false);
-  const [checkingSession, setCheckingSession] = useState(Boolean(localStorage.getItem("modelwise_session")));
+
   const recommendInFlight = useRef(false);
   const refreshUsage = () => {
     api("/api/v1/usage").then(setUsage).catch(() => {});
@@ -184,9 +185,15 @@ function App() {
   useEffect(() => {
     if (!localStorage.getItem("modelwise_session")) return;
     api("/api/v1/auth/me", { timeoutMs: 12000 })
-      .then((data) => dispatch(setUser(data.user)))
-      .catch(() => localStorage.removeItem("modelwise_session"))
-      .finally(() => setCheckingSession(false));
+      .then((data) => {
+        localStorage.setItem("modelwise_user", JSON.stringify(data.user));
+        dispatch(setUser(data.user));
+      })
+      .catch(() => {
+        localStorage.removeItem("modelwise_session");
+        localStorage.removeItem("modelwise_user");
+        dispatch(clearUser());
+      });
   }, []);
   useEffect(() => {
     if (!user) return;
@@ -309,13 +316,13 @@ function App() {
     }
   };
 
-  if (checkingSession)
-    return <div className="auth-loading">Checking session…</div>;
-
   if (!user)
     return (
       <Auth
-        onLogin={(account) => dispatch(setUser(account))}
+        onLogin={(account) => {
+          localStorage.setItem("modelwise_user", JSON.stringify(account));
+          dispatch(setUser(account));
+        }}
         errorMessage={errorMessage}
         setErrorMessage={setErrorMessage}
       />

@@ -36,9 +36,18 @@ export const loadExchangeRates = createAsyncThunk(
   }
 );
 
+const readStoredUser = () => {
+  if (!localStorage.getItem("modelwise_session")) return null;
+  try {
+    return JSON.parse(localStorage.getItem("modelwise_user") || "null");
+  } catch {
+    return null;
+  }
+};
+
 const authSlice = createSlice({
   name: "auth",
-  initialState: { user: null },
+  initialState: { user: readStoredUser() },
   reducers: {
     setUser: (state, action) => { state.user = action.payload; },
     clearUser: (state) => { state.user = null; },
