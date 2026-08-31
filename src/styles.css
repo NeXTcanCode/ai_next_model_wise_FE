@@ -1601,6 +1601,13 @@ textarea:focus {
     justify-items: start;
   }
 }
+.auth-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #736b80;
+  font: 500 13px "DM Sans", sans-serif;
+}
 .auth-shell {
   min-height: 100vh;
   background: linear-gradient(rgb(248 247 251 / 82%), rgb(82 64 135 / 82%)),

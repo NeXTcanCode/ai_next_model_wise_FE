@@ -183,7 +183,7 @@ function App() {
   }, [dispatch]);
   useEffect(() => {
     if (!localStorage.getItem("modelwise_session")) return;
-    api("/api/v1/auth/me")
+    api("/api/v1/auth/me", { timeoutMs: 12000 })
       .then((data) => dispatch(setUser(data.user)))
       .catch(() => localStorage.removeItem("modelwise_session"))
       .finally(() => setCheckingSession(false));
@@ -309,7 +309,8 @@ function App() {
     }
   };
 
-  if (checkingSession) return null;
+  if (checkingSession)
+    return <div className="auth-loading">Checking session…</div>;
 
   if (!user)
     return (

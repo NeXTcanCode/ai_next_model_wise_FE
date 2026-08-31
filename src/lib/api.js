@@ -3,19 +3,32 @@ const API_BASE = import.meta.env.VITE_API_URL || "https://ai-nex-model-wise-be.o
 export const api = async (path, options = {}) => {
   const token = localStorage.getItem("modelwise_session");
   const isFormData = options.body instanceof FormData;
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
+  const { timeoutMs, signal: callerSignal, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  callerSignal?.addEventListener("abort", abort, { once: true });
+  const timeout = timeoutMs
+    ? window.setTimeout(() => controller.abort(), timeoutMs)
+    : null;
+  try {
+    const response = await fetch(`${API_BASE}${path}`, {
+      ...fetchOptions,
+      signal: controller.signal,
+      headers: {
       ...(!isFormData ? { "Content-Type": "application/json" } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.headers || {}),
     },
-  });
-  const body = await response.json().catch(() => ({}));
-  if (response.status === 401) {
-    localStorage.removeItem("modelwise_session");
-    window.dispatchEvent(new Event("modelwise:unauthorized"));
+    });
+    const body = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+      localStorage.removeItem("modelwise_session");
+      window.dispatchEvent(new Event("modelwise:unauthorized"));
+    }
+    if (!response.ok) throw new Error(body.error?.message || "Request failed");
+    return body.data;
+  } finally {
+    if (timeout) window.clearTimeout(timeout);
+    callerSignal?.removeEventListener("abort", abort);
   }
-  if (!response.ok) throw new Error(body.error?.message || "Request failed");
-  return body.data;
 };
