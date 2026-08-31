@@ -358,11 +358,11 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       }
       setMessages((current) => [
         ...current,
-          {
-            id: `assistant-${Date.now()}`,
-            role: "assistant",
-            content: data.response || "No response was returned.",
-          },
+        {
+          id: `assistant-${Date.now()}`,
+          role: "assistant",
+          content: data.response || "No response was returned.",
+        },
       ]);
       onUsageRefresh?.();
       // setSelectionMessage(`Response from ${data.provider}`);
@@ -798,7 +798,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             onChange={chooseImage}
           />
         )}
-          <div className="ai_match_maker__composer-actions">
+        <div className="ai_match_maker__composer-actions">
           <BrowserVoiceInput
             disabled={isResponding}
             onListeningChange={setIsVoiceListening}
@@ -818,7 +818,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
               <ImagePlus size={17} />
             </button>
           )}
-          <label className="ai_match_maker__model-picker">
+          {/* <label className="ai_match_maker__model-picker">
             <select
               value={selectedModel}
               onChange={(event) => {
@@ -845,7 +845,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
               ))}
             </select>
             <ChevronDown size={16} aria-hidden="true" />
-          </label>
+          </label> */}
 
           {chatMode === "coder" && (
             <label className="ai_match_maker__model-picker ai_match_maker__coder-task-picker">
