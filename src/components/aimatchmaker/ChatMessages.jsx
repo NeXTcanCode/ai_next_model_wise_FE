@@ -2,10 +2,18 @@ import React from "react";
 import { Bot, Copy, Pencil, RotateCcw, ThumbsDown, ThumbsUp } from "lucide-react";
 import MessageContent from "./MessageContent";
 
+const usageTitle = (usage) => {
+  if (!usage) return "Token usage unavailable";
+  const input = usage.prompt_tokens ?? usage.input_tokens;
+  const output = usage.completion_tokens ?? usage.output_tokens;
+  const cache = usage.prompt_tokens_details?.cached_tokens ?? usage.cached_tokens ?? usage.cache_read_input_tokens ?? 0;
+  return `Input tokens: ${input ?? "—"}\nOutput tokens: ${output ?? "—"}\nCache tokens: ${cache}`;
+};
+
 export default function ChatMessages({ messages, feedback, onCopy, onEdit, onFeedback, onRegenerate, onRetry }) {
   return messages.map((item) => item.role === "user" ? (
     <div className="ai_match_maker__user-message-wrap" key={item.id}>
-      <div className="ai_match_maker__user-message">
+      <div className="ai_match_maker__user-message" title={usageTitle(item.usage)}>
         {item.imageUrl && <img src={item.imageUrl} alt={item.imageName || "Uploaded image"} />}
         {item.content}
       </div>
@@ -17,7 +25,7 @@ export default function ChatMessages({ messages, feedback, onCopy, onEdit, onFee
   ) : (
     <article className={`ai_match_maker__response${item.isError ? " ai_match_maker__response--error" : ""}`} key={item.id}>
       <div className="ai_match_maker__response-identity"><span><Bot size={15} /></span><b>NeXT AI</b></div>
-      <p><MessageContent content={item.content} /></p>
+      <p title={usageTitle(item.usage)}><MessageContent content={item.content} /></p>
       {!item.isError && <div className="ai_match_maker__message-actions ai_match_maker__response-actions">
         <button type="button" onClick={() => onCopy(item.content)} aria-label="Copy response" title="Copy response"><Copy size={13} /></button>
         <button type="button" className={feedback[item.id] === true ? "selected" : ""} onClick={() => onFeedback(item.id, true)} aria-label="Helpful response" title="Helpful"><ThumbsUp size={13} /></button>

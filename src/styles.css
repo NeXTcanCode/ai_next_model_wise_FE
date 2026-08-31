@@ -1521,6 +1521,47 @@ textarea:focus {
 .mobile-menu {
   display: none;
 }
+.next-ai-workspace {
+  display: flex;
+  min-height: 0;
+}
+.next-ai-sidebar {
+  width: 230px;
+  flex: 0 0 230px;
+  overflow-y: auto;
+  padding: 22px 14px;
+  border-right: 1px solid #eeeaf4;
+  background: #fcfbfe;
+}
+.next-ai-sidebar__back,
+.next-ai-sidebar__new,
+.next-ai-sidebar__section button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: #716b7d;
+  text-align: left;
+  cursor: pointer;
+  font: 12px "DM Sans";
+}
+.next-ai-sidebar__back { padding: 3px 6px 18px; color: #6c5bd5; }
+.next-ai-sidebar__title { display: flex; align-items: center; gap: 9px; padding: 10px 6px 18px; color: #302942; font: 700 18px "Space Grotesk"; }
+.next-ai-sidebar__title span { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #7462e5; color: #fff; }
+.next-ai-sidebar__new { justify-content: center; margin-bottom: 22px; padding: 10px; border-radius: 8px; background: #7462e5; color: #fff; font-weight: 600; }
+.next-ai-sidebar__section { display: grid; gap: 3px; margin-top: 18px; }
+.next-ai-sidebar__section small { padding: 0 7px 7px; color: #aaa5b5; font: 9px "DM Mono"; letter-spacing: .08em; }
+.next-ai-sidebar__section button { padding: 8px 7px; border-radius: 7px; }
+.next-ai-sidebar__section button:hover, .next-ai-sidebar__chats button.active { background: #eeeaff; color: #5e4dca; }
+.next-ai-sidebar__chats button span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.next-ai-sidebar__chats button i { display: none; color: #9b95aa; font-style: normal; }
+.next-ai-sidebar__chats button:hover i { display: block; }
+.next-ai-sidebar__empty { padding: 7px; color: #9b95aa; font-size: 11px; line-height: 1.4; }
+@media (max-width: 1191px) {
+  .next-ai-sidebar { width: 210px; flex-basis: 210px; }
+}
 @media (max-width: 1191px) {
   .ai_match_maker__conversation-toolbar {
     right: max(16px, calc((100vw - 768px) / 2));

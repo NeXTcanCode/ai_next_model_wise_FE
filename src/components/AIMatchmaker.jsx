@@ -6,12 +6,13 @@ import Composer from "./aimatchmaker/Composer";
 import NewChatModal from "./aimatchmaker/NewChatModal";
 import SelectionAction from "./aimatchmaker/SelectionAction";
 import WelcomeState from "./aimatchmaker/WelcomeState";
+import NextAISidebar from "./NextAISidebar";
 
 // IMAGE CHAT TEMPORARILY DISABLED.
 // Change this to true when the backend vision endpoint is ready to go live.
 const IMAGE_CHAT_ENABLED = false;
 
-export default function AIMatchmaker({ onUsageRefresh, userName }) {
+export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecommend }) {
   const unavailableMessage =
     "NeXT AI is temporarily unavailable. Please try again in a moment.";
   const visionUnavailableMessage =
@@ -27,6 +28,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   const [isSelectingModel, setIsSelectingModel] = useState(false);
   const [selectionMessage, setSelectionMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [conversationId, setConversationId] = useState(null);
   const [isResponding, setIsResponding] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -252,6 +254,18 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
       message.trim() || (imageToSend ? "Describe this image." : "");
     if (!promptToSend || isResponding) return;
 
+    let activeConversationId = conversationId;
+    if (!activeConversationId) {
+      try {
+        const data = await api("/api/v1/chats", { method: "POST", body: JSON.stringify({}) });
+        activeConversationId = data.chat.id;
+        setConversationId(activeConversationId);
+      } catch (error) {
+        setSelectionMessage(error.message || "Could not create chat.");
+        return;
+      }
+    }
+
     const userMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -308,18 +322,23 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
             answerStyle,
             chatMode,
             coderTask: chatMode === "coder" ? coderTask : null,
+            conversationId: activeConversationId,
           }),
         });
       }
       setMessages((current) => [
-        ...current,
+        ...current.map((item) =>
+          item.id === userMessage.id ? { ...item, usage: data.usage } : item
+        ),
         {
           id: `assistant-${Date.now()}`,
           role: "assistant",
           content: data.response || "No response was returned.",
+          usage: data.usage,
         },
       ]);
       onUsageRefresh?.();
+      window.dispatchEvent(new Event("next-ai:chats-changed"));
       // setSelectionMessage(`Response from ${data.provider}`);
       if (imageToSend) {
         setSelectionMessage("Image analyzed by NeXT Vision");
@@ -422,6 +441,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     requestAbortControllerRef.current = null;
     setIsResponding(false);
     setMessages([]);
+    setConversationId(null);
     setMessage("");
     setSelectedImage(null);
     setSelectedExcerpt(null);
@@ -454,6 +474,21 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
     window.requestAnimationFrame(() => messageInputRef.current?.focus());
   };
 
+  const openChat = async (chatId) => {
+    try {
+      const data = await api(`/api/v1/chats/${chatId}`);
+      setConversationId(chatId);
+      setMessages(data.chat.messages || []);
+      setMessage("");
+      setSelectionMessage("");
+    } catch (error) { setSelectionMessage(error.message || "Could not load chat."); }
+  };
+
+  const useSkill = (prompt) => {
+    setMessage(prompt);
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+  };
+
   const prepareRegeneration = () => {
     const lastUserMessage = [...messages]
       .reverse()
@@ -465,7 +500,8 @@ export default function AIMatchmaker({ onUsageRefresh, userName }) {
   };
 
   return (
-    <section className="ai_match_maker">
+    <section className="ai_match_maker next-ai-workspace">
+      <NextAISidebar activeChatId={conversationId} onSelectChat={openChat} onNewChat={clearChat} onSkill={useSkill} onBack={onBackToRecommend} />
       {messages.length > 0 && <div className="ai_match_maker__conversation-toolbar"><button type="button" className="ai_match_maker__new-chat" onClick={startNewChat} aria-label="Start a new chat"><Plus size={15} /><span>New chat</span></button></div>}
       <div ref={conversationRef} className="ai_match_maker__conversation" onMouseUp={showSelectionAction} onTouchEnd={showSelectionAction}>
         {!messages.length && !isResponding && <WelcomeState greeting={timeGreeting} firstName={firstName} chatMode={chatMode} setChatMode={setChatMode} setAnswerStyle={setAnswerStyle} />}

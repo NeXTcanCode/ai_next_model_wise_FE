@@ -48,6 +48,7 @@ function Shell({
   recommend,
   isRecommending,
   onUsageRefresh,
+  onBackToRecommend,
 }) {
   return (
     <div className="app-shell">
@@ -100,7 +101,7 @@ function Shell({
           </div>
         </header>
         {view === "bot" ? (
-          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} />
+          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} onBackToRecommend={onBackToRecommend} />
         ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}
@@ -143,9 +144,15 @@ function Shell({
 function App() {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
-  const [view, setView] = useState(() =>
-    window.location.pathname === "/ranking" ? "ranking" : "recommend"
-  );
+  const [view, setView] = useState(() => {
+    const path = window.location.pathname;
+    return path === "/ranking" ? "ranking" : path === "/next_ai" ? "bot" : path === "/history" ? "history" : path === "/models" ? "models" : "recommend";
+  });
+  const navigateView = (nextView) => {
+    const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;
+    window.history.pushState({}, "", path);
+    setView(nextView);
+  };
   const [models, setModels] = useState([]);
   const [rankedModels, setRankedModels] = useState([]);
   const [prompt, setPrompt] = useState("");
@@ -335,7 +342,7 @@ function App() {
             user={user}
             dispatch={dispatch}
             view={view}
-            setView={setView}
+            setView={navigateView}
             menu={menu}
             setMenu={setMenu}
             usage={usage}
@@ -359,14 +366,15 @@ function App() {
             recommend={recommend}
             isRecommending={isRecommending}
             onUsageRefresh={refreshUsage}
+            onBackToRecommend={() => navigateView("recommend")}
           />
         } />
-        <Route path="*" element={
+        <Route path={["/", "/recommend", "/next_ai", "/history", "/models"]} element={
           <Shell
             user={user}
             dispatch={dispatch}
             view={view}
-            setView={setView}
+            setView={navigateView}
             menu={menu}
             setMenu={setMenu}
             usage={usage}
@@ -390,6 +398,7 @@ function App() {
             recommend={recommend}
             isRecommending={isRecommending}
             onUsageRefresh={refreshUsage}
+            onBackToRecommend={() => navigateView("recommend")}
           />
         } />
       </Routes>
