@@ -369,7 +369,7 @@ function App() {
             onBackToRecommend={() => navigateView("recommend")}
           />
         } />
-        <Route path={["/", "/recommend", "/next_ai", "/history", "/models"]} element={
+        <Route path="*" element={
           <Shell
             user={user}
             dispatch={dispatch}
