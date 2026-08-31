@@ -18,6 +18,14 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
     "NeXT AI image analysis is temporarily unavailable. Please try again in a moment.";
   const [message, setMessage] = useState("");
   const [models, setModels] = useState([]);
+  const [skills, setSkills] = useState([
+    { name: "summarise", prompt: "Summarise this clearly:" },
+    { name: "rewrite", prompt: "Rewrite this to be clearer and more polished:" },
+    { name: "explain", prompt: "Explain this simply:" },
+    { name: "translate", prompt: "Translate this into English:" },
+    { name: "debug", prompt: "Help me debug this code:\n" },
+    { name: "generate-tests", prompt: "Generate tests for this code:\n" },
+  ]);
   const [selectedModel, setSelectedModel] = useState("");
   const [recommendedModelName, setRecommendedModelName] = useState("");
   const [hasManualModelChoice, setHasManualModelChoice] = useState(false);
@@ -80,6 +88,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
       })
       .catch(() => setModels([]));
   }, []);
+  useEffect(() => { api("/api/v1/skills").then((data) => setSkills((current) => [...current, ...(data.skills || []).map((skill) => ({ name: skill.name.toLowerCase().replace(/\s+/g, "-"), prompt: skill.markdown }))])).catch(() => {}); }, []);
   useEffect(() => {
     const prompt = sessionStorage.getItem("next_ai_skill_prompt");
     if (prompt) { setMessage(prompt); sessionStorage.removeItem("next_ai_skill_prompt"); }
@@ -526,7 +535,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
         <div ref={conversationEndRef} aria-hidden="true" />
       </div>
       <SelectionAction selection={selectedExcerpt} onAdd={addSelectionToChat} />
-      <Composer inputRef={messageInputRef} imageInputRef={imageInputRef} message={message} setMessage={setMessage} selectedImage={selectedImage} setSelectedImage={setSelectedImage} chooseImage={chooseImage} imageChatEnabled={IMAGE_CHAT_ENABLED} isVoiceListening={isVoiceListening} setIsVoiceListening={setIsVoiceListening} isResponding={isResponding} stopGeneration={stopGeneration} handleSend={handleSend} chatMode={chatMode} coderTask={coderTask} setCoderTask={setCoderTask} answerStyle={answerStyle} setAnswerStyle={setAnswerStyle} setResponseMode={setResponseMode} composerHints={composerHints} placeholderIndex={placeholderIndex} hasManualModelChoice={hasManualModelChoice} recommendedModelName={recommendedModelName} selectedModel={selectedModel} models={models} />
+      <Composer inputRef={messageInputRef} imageInputRef={imageInputRef} message={message} setMessage={setMessage} selectedImage={selectedImage} setSelectedImage={setSelectedImage} chooseImage={chooseImage} imageChatEnabled={IMAGE_CHAT_ENABLED} isVoiceListening={isVoiceListening} setIsVoiceListening={setIsVoiceListening} isResponding={isResponding} stopGeneration={stopGeneration} handleSend={handleSend} chatMode={chatMode} coderTask={coderTask} setCoderTask={setCoderTask} answerStyle={answerStyle} setAnswerStyle={setAnswerStyle} setResponseMode={setResponseMode} composerHints={composerHints} placeholderIndex={placeholderIndex} hasManualModelChoice={hasManualModelChoice} recommendedModelName={recommendedModelName} selectedModel={selectedModel} models={models} skills={skills} />
       <NewChatModal open={showNewChatConfirm} onClose={() => setShowNewChatConfirm(false)} onConfirm={clearChat} />
     </section>
   );

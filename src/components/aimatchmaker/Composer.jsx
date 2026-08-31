@@ -1,11 +1,15 @@
 import React from "react";
-import { ArrowUp, ChevronDown, ImagePlus, Square, X } from "lucide-react";
+import { ArrowUp, ChevronDown, ImagePlus, Square, Sparkles, X } from "lucide-react";
 import BrowserVoiceInput from "../BrowserVoiceInput";
 
-export default function Composer({ inputRef, imageInputRef, message, setMessage, selectedImage, setSelectedImage, chooseImage, imageChatEnabled, isVoiceListening, setIsVoiceListening, isResponding, stopGeneration, handleSend, chatMode, coderTask, setCoderTask, answerStyle, setAnswerStyle, setResponseMode, composerHints, placeholderIndex, hasManualModelChoice, recommendedModelName, selectedModel, models }) {
+export default function Composer({ inputRef, imageInputRef, message, setMessage, selectedImage, setSelectedImage, chooseImage, imageChatEnabled, isVoiceListening, setIsVoiceListening, isResponding, stopGeneration, handleSend, chatMode, coderTask, setCoderTask, answerStyle, setAnswerStyle, setResponseMode, composerHints, placeholderIndex, hasManualModelChoice, recommendedModelName, selectedModel, models, skills = [] }) {
+  const slashQuery = message.startsWith("/") ? message.slice(1).split(/\s/)[0].toLowerCase() : "";
+  const skillSuggestions = slashQuery === "" ? skills : skills.filter((skill) => skill.name.includes(slashQuery));
+  const chooseSkill = (skill) => setMessage(`${skill.prompt} `);
   return <form className="ai_match_maker__composer" onSubmit={handleSend}>
     {imageChatEnabled && selectedImage && <div className="ai_match_maker__image-preview"><img src={selectedImage.previewUrl} alt="Selected upload preview" /><span>{selectedImage.file.name}</span><button type="button" onClick={() => setSelectedImage(null)} aria-label="Remove selected image"><X size={14} /></button></div>}
     <textarea ref={inputRef} value={message} onChange={(event) => setMessage(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.form?.requestSubmit(); } }} placeholder={message || isVoiceListening || isResponding ? "" : composerHints[placeholderIndex]} rows={1} aria-label="Message NeXT AI" />
+    {message.startsWith("/") && skillSuggestions.length > 0 && <div className="skill-command-menu" role="listbox">{skillSuggestions.slice(0, 8).map((skill) => <button type="button" key={skill.name} onClick={() => chooseSkill(skill)}><Sparkles size={14} /> /{skill.name}</button>)}</div>}
     {imageChatEnabled && <input ref={imageInputRef} className="ai_match_maker__image-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={chooseImage} />}
     <div className="ai_match_maker__composer-actions">
       <BrowserVoiceInput disabled={isResponding} onListeningChange={setIsVoiceListening} onTranscript={(transcript) => setMessage((current) => current ? `${current} ${transcript}` : transcript)} />
