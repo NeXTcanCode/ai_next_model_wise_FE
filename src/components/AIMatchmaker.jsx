@@ -123,7 +123,8 @@ export default function AIMatchmaker({
     if (!input) return;
 
     input.style.height = "auto";
-    const maximumHeight = Math.min(320, window.innerHeight * 0.4);
+    // Keep the outer composer compact; long prompts scroll inside the textarea.
+    const maximumHeight = Math.min(64, window.innerHeight * 0.12);
     const nextHeight = Math.min(input.scrollHeight, maximumHeight);
     input.style.height = `${nextHeight}px`;
     input.style.overflowY =

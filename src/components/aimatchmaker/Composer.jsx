@@ -82,26 +82,23 @@ export default function Composer({
         rows={1}
         aria-label="Message NeXT AI"
       />
-      <div
-        className={`ai_match_maker__annotations${
-          annotations.length ? "" : " is-empty"
-        }`}
-        aria-label="Selected annotations"
-      >
-        {annotations.map((annotation, index) => (
-          <button
-            type="button"
-            key={annotation.id}
-            onClick={() =>
-              setAnnotations((current) =>
-                current.filter((item) => item.id !== annotation.id)
-              )
-            }
-          >
-            Annotation {index + 1} ×
-          </button>
-        ))}
-      </div>
+      {annotations.length > 0 && (
+        <div className="ai_match_maker__annotations" aria-label="Selected annotations">
+          {annotations.map((annotation, index) => (
+            <button
+              type="button"
+              key={annotation.id}
+              onClick={() =>
+                setAnnotations((current) =>
+                  current.filter((item) => item.id !== annotation.id)
+                )
+              }
+            >
+              Annotation {index + 1} ×
+            </button>
+          ))}
+        </div>
+      )}
       {message.startsWith("/") && skillSuggestions.length > 0 && (
         <div className="skill-command-menu" role="listbox">
           {skillSuggestions.slice(0, 8).map((skill) => (
