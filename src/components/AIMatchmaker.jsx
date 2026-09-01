@@ -11,7 +11,11 @@ import WelcomeState from "./aimatchmaker/WelcomeState";
 // Change this to true when the backend vision endpoint is ready to go live.
 const IMAGE_CHAT_ENABLED = false;
 
-export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecommend }) {
+export default function AIMatchmaker({
+  onUsageRefresh,
+  userName,
+  onBackToRecommend,
+}) {
   const unavailableMessage =
     "NeXT AI is temporarily unavailable. Please try again in a moment.";
   const visionUnavailableMessage =
@@ -20,7 +24,10 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
   const [models, setModels] = useState([]);
   const [skills, setSkills] = useState([
     { name: "summarise", prompt: "Summarise this clearly:" },
-    { name: "rewrite", prompt: "Rewrite this to be clearer and more polished:" },
+    {
+      name: "rewrite",
+      prompt: "Rewrite this to be clearer and more polished:",
+    },
     { name: "explain", prompt: "Explain this simply:" },
     { name: "translate", prompt: "Translate this into English:" },
     { name: "debug", prompt: "Help me debug this code:\n" },
@@ -59,6 +66,7 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
     "Enter to send · Shift + Enter for a new line · Esc to stop",
     "Click New Chat to open a fresh conversation",
     "Push to talk using the microphone",
+    "Type / to use skills",
   ];
   const hour = new Date().getHours();
   const firstName = String(userName || "")
@@ -88,10 +96,25 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
       })
       .catch(() => setModels([]));
   }, []);
-  useEffect(() => { api("/api/v1/skills").then((data) => setSkills((current) => [...current, ...(data.skills || []).map((skill) => ({ name: skill.name.toLowerCase().replace(/\s+/g, "-"), prompt: skill.markdown }))])).catch(() => {}); }, []);
+  useEffect(() => {
+    api("/api/v1/skills")
+      .then((data) =>
+        setSkills((current) => [
+          ...current,
+          ...(data.skills || []).map((skill) => ({
+            name: skill.name.toLowerCase().replace(/\s+/g, "-"),
+            prompt: skill.markdown,
+          })),
+        ])
+      )
+      .catch(() => {});
+  }, []);
   useEffect(() => {
     const prompt = sessionStorage.getItem("next_ai_skill_prompt");
-    if (prompt) { setMessage(prompt); sessionStorage.removeItem("next_ai_skill_prompt"); }
+    if (prompt) {
+      setMessage(prompt);
+      sessionStorage.removeItem("next_ai_skill_prompt");
+    }
   }, []);
 
   useEffect(() => {
@@ -269,7 +292,10 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
     let activeConversationId = conversationId;
     if (!activeConversationId) {
       try {
-        const data = await api("/api/v1/chats", { method: "POST", body: JSON.stringify({}) });
+        const data = await api("/api/v1/chats", {
+          method: "POST",
+          body: JSON.stringify({}),
+        });
         activeConversationId = data.chat.id;
         setConversationId(activeConversationId);
       } catch (error) {
@@ -493,7 +519,9 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
       setMessages(data.chat.messages || []);
       setMessage("");
       setSelectionMessage("");
-    } catch (error) { setSelectionMessage(error.message || "Could not load chat."); }
+    } catch (error) {
+      setSelectionMessage(error.message || "Could not load chat.");
+    }
   };
 
   const useSkill = (prompt) => {
@@ -527,16 +555,96 @@ export default function AIMatchmaker({ onUsageRefresh, userName, onBackToRecomme
 
   return (
     <section className="ai_match_maker next-ai-workspace">
-      {messages.length > 0 && <div className="ai_match_maker__conversation-toolbar"><button type="button" className="ai_match_maker__new-chat" onClick={startNewChat} aria-label="Start a new chat"><Plus size={15} /><span>New chat</span></button></div>}
-      <div ref={conversationRef} className="ai_match_maker__conversation" onMouseUp={showSelectionAction} onTouchEnd={showSelectionAction}>
-        {!messages.length && !isResponding && <WelcomeState greeting={timeGreeting} firstName={firstName} chatMode={chatMode} setChatMode={setChatMode} setAnswerStyle={setAnswerStyle} />}
-        <ChatMessages messages={messages} feedback={responseFeedback} onCopy={copyToClipboard} onEdit={editUserMessage} onFeedback={setHelpfulFeedback} onRegenerate={prepareRegeneration} onRetry={restorePromptForRetry} />
-        {isResponding && <div className="ai_match_maker__thinking" role="status" aria-live="polite"><span className="ai_match_maker__thinking-mark"><Bot size={16} /></span><span>NeXT is thinking</span><span className="ai_match_maker__thinking-dots" aria-hidden="true"><i /><i /><i /></span></div>}
+      {messages.length > 0 && (
+        <div className="ai_match_maker__conversation-toolbar">
+          <button
+            type="button"
+            className="ai_match_maker__new-chat"
+            onClick={startNewChat}
+            aria-label="Start a new chat"
+          >
+            <Plus size={15} />
+            <span>New chat</span>
+          </button>
+        </div>
+      )}
+      <div
+        ref={conversationRef}
+        className="ai_match_maker__conversation"
+        onMouseUp={showSelectionAction}
+        onTouchEnd={showSelectionAction}
+      >
+        {!messages.length && !isResponding && (
+          <WelcomeState
+            greeting={timeGreeting}
+            firstName={firstName}
+            chatMode={chatMode}
+            setChatMode={setChatMode}
+            setAnswerStyle={setAnswerStyle}
+          />
+        )}
+        <ChatMessages
+          messages={messages}
+          feedback={responseFeedback}
+          onCopy={copyToClipboard}
+          onEdit={editUserMessage}
+          onFeedback={setHelpfulFeedback}
+          onRegenerate={prepareRegeneration}
+          onRetry={restorePromptForRetry}
+        />
+        {isResponding && (
+          <div
+            className="ai_match_maker__thinking"
+            role="status"
+            aria-live="polite"
+          >
+            <span className="ai_match_maker__thinking-mark">
+              <Bot size={16} />
+            </span>
+            <span>NeXT is thinking</span>
+            <span className="ai_match_maker__thinking-dots" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          </div>
+        )}
         <div ref={conversationEndRef} aria-hidden="true" />
       </div>
       <SelectionAction selection={selectedExcerpt} onAdd={addSelectionToChat} />
-      <Composer inputRef={messageInputRef} imageInputRef={imageInputRef} message={message} setMessage={setMessage} selectedImage={selectedImage} setSelectedImage={setSelectedImage} chooseImage={chooseImage} imageChatEnabled={IMAGE_CHAT_ENABLED} isVoiceListening={isVoiceListening} setIsVoiceListening={setIsVoiceListening} isResponding={isResponding} stopGeneration={stopGeneration} handleSend={handleSend} chatMode={chatMode} coderTask={coderTask} setCoderTask={setCoderTask} answerStyle={answerStyle} setAnswerStyle={setAnswerStyle} setResponseMode={setResponseMode} composerHints={composerHints} placeholderIndex={placeholderIndex} hasManualModelChoice={hasManualModelChoice} recommendedModelName={recommendedModelName} selectedModel={selectedModel} models={models} skills={skills} />
-      <NewChatModal open={showNewChatConfirm} onClose={() => setShowNewChatConfirm(false)} onConfirm={clearChat} />
+      <Composer
+        inputRef={messageInputRef}
+        imageInputRef={imageInputRef}
+        message={message}
+        setMessage={setMessage}
+        selectedImage={selectedImage}
+        setSelectedImage={setSelectedImage}
+        chooseImage={chooseImage}
+        imageChatEnabled={IMAGE_CHAT_ENABLED}
+        isVoiceListening={isVoiceListening}
+        setIsVoiceListening={setIsVoiceListening}
+        isResponding={isResponding}
+        stopGeneration={stopGeneration}
+        handleSend={handleSend}
+        chatMode={chatMode}
+        coderTask={coderTask}
+        setCoderTask={setCoderTask}
+        answerStyle={answerStyle}
+        setAnswerStyle={setAnswerStyle}
+        setResponseMode={setResponseMode}
+        composerHints={composerHints}
+        placeholderIndex={placeholderIndex}
+        hasManualModelChoice={hasManualModelChoice}
+        recommendedModelName={recommendedModelName}
+        selectedModel={selectedModel}
+        models={models}
+        skills={skills}
+      />
+      <NewChatModal
+        open={showNewChatConfirm}
+        onClose={() => setShowNewChatConfirm(false)}
+        onConfirm={clearChat}
+      />
     </section>
   );
 }

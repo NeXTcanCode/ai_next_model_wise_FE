@@ -146,7 +146,7 @@ function Shell({
             <span aria-hidden>☰</span>
           </button>
           <div>
-            {isNextAIHistory && (
+            {/* {isNextAIHistory && (
               <button
                 type="button"
                 className="next-ai-history__back"
@@ -154,7 +154,7 @@ function Shell({
               >
                 ← Back to NeXT AI
               </button>
-            )}
+            )} */}
             <span className="eyebrow">
               {currentView === "recommend"
                 ? "WORKSPACE / RECOMMEND"
@@ -177,6 +177,14 @@ function Shell({
           <div className="header-actions">
             {/* NeXT AI usage summary is intentionally held for a better UX decision.
                 Restore this block when the usage presentation is finalized. */}
+            {isNextAI && !isNextAIHistory && (
+              <button
+                className="text-button"
+                onClick={() => navigate("/next_ai/history")}
+              >
+                View history
+              </button>
+            )}
             {!isNextAI && (
               <>
                 <StatusSummary

@@ -1,24 +1,346 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BarChart3, Coins, MessageSquare, Settings2 } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import {
+  BarChart3,
+  Download,
+  MessageSquare,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { api } from "../lib/api";
-import { loadExchangeRates, setCurrency } from "../store";
 
+const ranges = [7, 15, 30];
+const number = (value) => Number(value) || 0;
+const tokensFromUsage = (usage) => ({
+  input: number(usage?.prompt_tokens ?? usage?.input_tokens),
+  output: number(usage?.completion_tokens ?? usage?.output_tokens),
+});
+const sum = (items) =>
+  items.reduce(
+    (total, item) => ({
+      input: total.input + number(item.inputTokens),
+      output: total.output + number(item.outputTokens),
+    }),
+    { input: 0, output: 0 }
+  );
+const dayKey = (date) => new Date(date).toISOString().slice(0, 10);
+const formatDay = (day) =>
+  new Date(`${day}T00:00:00`).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+import { useLocation, useNavigate } from "react-router-dom";
 export default function NextAIUsageHistory() {
-  const dispatch = useDispatch();
-  const currency = useSelector((state) => state.currency.selected);
-  const rates = useSelector((state) => state.currency.rates);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isNextAIHistory = location.pathname === "/next_ai/history";
   const [days, setDays] = useState(7);
   const [events, setEvents] = useState([]);
-  const [inputRate, setInputRate] = useState("0");
-  const [outputRate, setOutputRate] = useState("0");
-  useEffect(() => { dispatch(loadExchangeRates()); }, [dispatch]);
-  useEffect(() => { api(`/api/v1/usage/history?days=${days}`).then((data) => setEvents(data.events || [])).catch(() => setEvents([])); }, [days]);
-  const totals = useMemo(() => events.reduce((result, event) => ({ input: result.input + event.inputTokens, output: result.output + event.outputTokens, units: result.units + event.weightedUnits }), { input: 0, output: 0, units: 0 }), [events]);
-  // User-entered rates are provider prices in USD per one million tokens.
-  const costUsd = (totals.input * Number(inputRate || 0) + totals.output * Number(outputRate || 0)) / 1000000;
-  const converted = costUsd * (currency === "USD" ? 1 : rates?.[currency] || 0);
-  const daily = Object.entries(events.reduce((all, event) => { const day = new Date(event.createdAt).toLocaleDateString(); all[day] = (all[day] || 0) + event.weightedUnits; return all; }, {})).sort((a, b) => new Date(a[0]) - new Date(b[0]));
-  const formatMoney = new Intl.NumberFormat("en-US", { style: "currency", currency, maximumFractionDigits: 6 });
-  return <section className="page-panel next-ai-history"><div className="page-intro"><div><span className="eyebrow">NEXT AI / USAGE</span><h2>Usage history</h2><p>Track NeXT AI tokens, messages, and estimated spend.</p></div><div className="history-controls"><select value={days} onChange={(event) => setDays(event.target.value)}><option value="7">Last 7 days</option><option value="15">Last 15 days</option><option value="30">Last 30 days</option></select><select value={currency} onChange={(event) => dispatch(setCurrency(event.target.value))}>{["USD", "INR", "EUR", "JPY", "CNY"].map((item) => <option key={item}>{item}</option>)}</select></div></div><div className="next-ai-history__cards"><div><MessageSquare size={18} /><small>MESSAGES</small><b>{events.length}</b></div><div><BarChart3 size={18} /><small>TOTAL TOKENS</small><b>{(totals.input + totals.output).toLocaleString()}</b></div><div><Coins size={18} /><small>ESTIMATED SPEND</small><b>{formatMoney.format(converted)}</b></div></div><div className="next-ai-history__pricing"><Settings2 size={17} /><div><b>Cost settings</b><span>Set your own price per 1M tokens. Current values are used for this estimate.</span></div><label>Input / 1M <input type="number" min="0" step="any" value={inputRate} onChange={(event) => setInputRate(event.target.value)} /></label><label>Output / 1M <input type="number" min="0" step="any" value={outputRate} onChange={(event) => setOutputRate(event.target.value)} /></label></div><div className="next-ai-history__chart"><h3>Usage by day</h3>{daily.length ? daily.map(([day, units]) => <div className="next-ai-history__bar" key={day}><span>{day}</span><div><i style={{ width: `${Math.max(4, (units / Math.max(...daily.map((item) => item[1]))) * 100)}%` }} /></div><b>{units.toLocaleString()}</b></div>) : <p>No NeXT AI usage in this period.</p>}</div></section>;
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      api(`/api/v1/usage/history?days=${Math.min(60, days * 2)}`).catch(() => ({
+        events: [],
+      })),
+      api("/api/v1/chats").catch(() => ({ chats: [] })),
+    ])
+      .then(([usage, chatData]) => {
+        setEvents(usage.events || []);
+        setChats(chatData.chats || []);
+      })
+      .finally(() => setLoading(false));
+  }, [days]);
+  const cutoff = Date.now() - days * 86400000;
+  const periodEvents = useMemo(
+    () =>
+      events.filter((event) => new Date(event.createdAt).getTime() >= cutoff),
+    [events, cutoff]
+  );
+  const totals = useMemo(() => sum(periodEvents), [periodEvents]);
+  const totalTokens = totals.input + totals.output;
+  const daily = useMemo(
+    () =>
+      Object.entries(
+        periodEvents.reduce((result, event) => {
+          const key = dayKey(event.createdAt);
+          result[key] =
+            (result[key] || 0) +
+            number(event.inputTokens) +
+            number(event.outputTokens);
+          return result;
+        }, {})
+      ).sort(([a], [b]) => a.localeCompare(b)),
+    [periodEvents]
+  );
+  const weekly = useMemo(() => {
+    const groups = {};
+    daily.forEach(([day, value]) => {
+      const date = new Date(`${day}T00:00:00`);
+      const week = new Date(date);
+      week.setDate(date.getDate() - date.getDay());
+      const key = dayKey(week);
+      groups[key] = (groups[key] || 0) + value;
+    });
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+  }, [daily]);
+  const previousTotals = useMemo(() => {
+    const cutoff = Date.now() - days * 86400000;
+    return sum(
+      events.filter((event) => {
+        const time = new Date(event.createdAt).getTime();
+        return time < cutoff;
+      })
+    );
+  }, [events, days]);
+  const conversations = useMemo(
+    () =>
+      chats
+        .map((chat) => {
+          const usage = sum(
+            (chat.messages || []).map((message) =>
+              tokensFromUsage(message.usage)
+            )
+          );
+          return { ...chat, ...usage, total: usage.input + usage.output };
+        })
+        .filter((chat) => chat.total > 0)
+        .sort((a, b) => b.total - a.total),
+    [chats]
+  );
+  const peak = daily.reduce(
+    (best, item) => (item[1] > (best?.[1] || 0) ? item : best),
+    null
+  );
+  const maxDaily = Math.max(1, ...daily.map(([, value]) => value));
+  const change = totalTokens - (previousTotals.input + previousTotals.output);
+  const changePercent =
+    previousTotals.input + previousTotals.output
+      ? Math.round(
+          (change / (previousTotals.input + previousTotals.output)) * 100
+        )
+      : null;
+  const exportCsv = () => {
+    const rows = [
+      [
+        "conversation",
+        "messages",
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "last_active",
+      ],
+      ...conversations.map((chat) => [
+        chat.title,
+        chat.messages?.length || 0,
+        chat.input,
+        chat.output,
+        chat.total,
+        chat.updatedAt,
+      ]),
+    ];
+    const csv = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replaceAll('"', '""')}"`)
+          .join(",")
+      )
+      .join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `next-ai-usage-${days}d.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <section className="page-panel next-ai-history">
+      <div className="page-intro">
+        <div>
+          {isNextAIHistory && (
+            <button
+              type="button"
+              className="next-ai-history__back"
+              onClick={() => navigate("/next_ai")}
+            >
+              ← Back to NeXT AI
+            </button>
+          )}
+          <span className="eyebrow">NEXT AI / USAGE</span>
+          <h2>Usage history</h2>
+          <p>Understand your NeXT AI usage over time.</p>
+        </div>
+        <div className="history-controls">
+          {ranges.map((value) => (
+            <button
+              type="button"
+              className={days === value ? "active" : ""}
+              onClick={() => setDays(value)}
+              key={value}
+            >
+              Last {value}d
+            </button>
+          ))}
+          <button
+            type="button"
+            className="next-ai-history__export"
+            onClick={exportCsv}
+          >
+            <Download size={15} /> Export CSV
+          </button>
+        </div>
+      </div>
+      {loading ? (
+        <p className="next-ai-history__empty">Loading usage…</p>
+      ) : (
+        <>
+          <div className="next-ai-history__cards">
+            <Metric
+              icon={<MessageSquare />}
+              label="MESSAGES"
+              value={periodEvents.length.toLocaleString()}
+            />
+            <Metric
+              icon={<BarChart3 />}
+              label="TOTAL TOKENS"
+              value={totalTokens.toLocaleString()}
+            />
+            <Metric
+              icon={<TrendingUp />}
+              label="DAILY AVERAGE"
+              value={Math.round(
+                totalTokens / Math.max(days, 1)
+              ).toLocaleString()}
+            />
+            <Metric
+              icon={<Zap />}
+              label="PEAK DAY"
+              value={peak ? `${peak[1].toLocaleString()} tokens` : "—"}
+            />
+          </div>
+          <div className="next-ai-history__grid">
+            <div className="next-ai-history__chart">
+              <div className="next-ai-history__section-heading">
+                <div>
+                  <span className="eyebrow">DAILY VIEW</span>
+                  <h3>Usage trend</h3>
+                </div>
+                {peak && <small>Peak: {formatDay(peak[0])}</small>}
+              </div>
+              {daily.length ? (
+                <div className="next-ai-history__bars">
+                  {daily.map(([day, value]) => (
+                    <div className="next-ai-history__day" key={day}>
+                      <b>{value.toLocaleString()}</b>
+                      <i
+                        style={{
+                          height: `${Math.max(8, (value / maxDaily) * 100)}%`,
+                        }}
+                      />
+                      <span>{formatDay(day)}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No NeXT AI usage in this period.</p>
+              )}
+            </div>
+            <div className="next-ai-history__trend">
+              <span className="eyebrow">WEEKLY SUMMARY</span>
+              <h3>Usage trends</h3>
+              {weekly.length ? (
+                weekly.map(([week, value], index) => (
+                  <div className="next-ai-history__week" key={week}>
+                    <span>Week {index + 1}</span>
+                    <b>{value.toLocaleString()} tokens</b>
+                    {index > 0 && (
+                      <small>
+                        {weekly[index - 1][1]
+                          ? `${
+                              value >= weekly[index - 1][1] ? "+" : ""
+                            }${Math.round(
+                              ((value - weekly[index - 1][1]) /
+                                weekly[index - 1][1]) *
+                                100
+                            )}%`
+                          : ""}
+                      </small>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p>No weekly data yet.</p>
+              )}
+              <p className="next-ai-history__insight">
+                {peak
+                  ? `Your usage peaked on ${formatDay(peak[0])}${
+                      weekly.length > 1
+                        ? " and is trending across the selected period"
+                        : ""
+                    }.`
+                  : "Your usage insights will appear after your first response."}
+              </p>
+            </div>
+          </div>
+          <div className="next-ai-history__comparison">
+            <div>
+              <span className="eyebrow">PERIOD COMPARISON</span>
+              <h3>Current vs previous {days} days</h3>
+            </div>
+            <strong>
+              {change >= 0 ? "+" : ""}
+              {change.toLocaleString()} tokens{" "}
+              {changePercent !== null &&
+                `(${changePercent >= 0 ? "+" : ""}${changePercent}%)`}
+            </strong>
+            <p>
+              Current: {totalTokens.toLocaleString()} · Previous:{" "}
+              {Math.max(
+                0,
+                previousTotals.input + previousTotals.output
+              ).toLocaleString()}{" "}
+              tokens
+            </p>
+          </div>
+          <div className="next-ai-history__conversations">
+            <div className="next-ai-history__section-heading">
+              <div>
+                <span className="eyebrow">RECENT CONVERSATIONS</span>
+                <h3>Per-conversation usage</h3>
+              </div>
+            </div>
+            {conversations.length ? (
+              <div className="next-ai-history__table">
+                {conversations.map((chat) => (
+                  <div className="next-ai-history__conversation" key={chat.id}>
+                    <MessageSquare size={16} />
+                    <span>
+                      <b>{chat.title}</b>
+                      <small>
+                        {chat.messages?.length || 0} messages ·{" "}
+                        {chat.input.toLocaleString()} input ·{" "}
+                        {chat.output.toLocaleString()} output
+                      </small>
+                    </span>
+                    <strong>{chat.total.toLocaleString()} tokens</strong>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No conversation usage in this period.</p>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+function Metric({ icon, label, value }) {
+  return (
+    <div>
+      <span>{icon}</span>
+      <small>{label}</small>
+      <b>{value}</b>
+    </div>
+  );
 }
