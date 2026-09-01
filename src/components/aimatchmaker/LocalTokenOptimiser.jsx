@@ -28,11 +28,11 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
   const [errorMessage, setErrorMessage] = useState("");
   const originalCount = useMemo(() => countTokens(message), [message]);
   const optimizedCount = optimized ? countTokens(optimized) : 0;
-  const savings = originalCount
+  const savings = optimized
     ? Math.max(0, Math.round((1 - optimizedCount / originalCount) * 100))
     : 0;
   const runOptimization = async () => {
-    setOptimizing(true); setErrorMessage(""); setOpen(true);
+    setOptimizing(true); setErrorMessage(""); setOptimized(""); setOpen(true);
     try { const data = await api("/api/v1/prompts/optimize", { method: "POST", body: JSON.stringify({ prompt: message }) }); setOptimized(data.optimizedPrompt || message); }
     catch (error) { setErrorMessage(error.message || "Optimization failed."); }
     finally { setOptimizing(false); }
