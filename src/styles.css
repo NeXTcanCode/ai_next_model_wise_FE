@@ -171,8 +171,8 @@ nav {
   display: flex;
   justify-content: flex-end;
   position: fixed;
-  right: max(16px, calc((100vw - 248px - 768px) / 2));
-  bottom: 155px;
+  /* right: max(16px, calc((100vw - 248px - 768px) / 2)); */
+  bottom: 175px;
   z-index: 11;
   width: auto;
   min-height: 30px;
@@ -396,7 +396,10 @@ nav {
   background: #f1eeff;
   color: #6352d1;
 }
-.local-token-optimiser.is-empty .local-token-optimiser__trigger { visibility: hidden; pointer-events: none; }
+.local-token-optimiser.is-empty .local-token-optimiser__trigger {
+  visibility: hidden;
+  pointer-events: none;
+}
 .local-token-optimiser__panel {
   position: absolute;
   z-index: 10;
@@ -412,7 +415,7 @@ nav {
   opacity: 0;
   pointer-events: none;
   transform: translateY(5px);
-  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
 }
 .local-token-optimiser__panel.is-open {
   visibility: visible;
@@ -424,7 +427,9 @@ nav {
 .local-token-optimiser__panel > small {
   display: block;
 }
-.local-token-optimiser__error { color: #b14b58 !important; }
+.local-token-optimiser__error {
+  color: #b14b58 !important;
+}
 .local-token-optimiser__panel > b {
   color: #403852;
   font-size: 13px;
@@ -1922,6 +1927,7 @@ textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 150px;
 }
 .next-ai-sidebar__chats button i {
   display: none;
@@ -2230,7 +2236,7 @@ textarea:focus {
 }
 @media (max-width: 1191px) {
   .ai_match_maker__conversation-toolbar {
-    right: max(16px, calc((100vw - 768px) / 2));
+    /* right: max(16px, calc((100vw - 768px) / 2)); */
   }
   .app-shell {
     height: auto;
