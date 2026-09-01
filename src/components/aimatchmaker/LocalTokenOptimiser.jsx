@@ -32,10 +32,21 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
     ? Math.max(0, Math.round((1 - optimizedCount / originalCount) * 100))
     : 0;
   const runOptimization = async () => {
-    setOptimizing(true); setErrorMessage(""); setOptimized(""); setOpen(true);
-    try { const data = await api("/api/v1/prompts/optimize", { method: "POST", body: JSON.stringify({ prompt: message }) }); setOptimized(data.optimizedPrompt || message); }
-    catch (error) { setErrorMessage(error.message || "Optimization failed."); }
-    finally { setOptimizing(false); }
+    setOptimizing(true);
+    setErrorMessage("");
+    setOptimized("");
+    setOpen(true);
+    try {
+      const data = await api("/api/v1/prompts/optimize", {
+        method: "POST",
+        body: JSON.stringify({ prompt: message }),
+      });
+      setOptimized(data.optimizedPrompt || message);
+    } catch (error) {
+      setErrorMessage(error.message || "Optimization failed.");
+    } finally {
+      setOptimizing(false);
+    }
   };
   const hasMessage = Boolean(message.trim());
   return (
@@ -64,10 +75,12 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
         >
           <X size={14} />
         </button>
-          <b>Optimize with Groq</b>
-          <small>Your prompt will be sent securely for optimization.</small>
-          {optimizing && <small>Optimizing prompt…</small>}
-          {errorMessage && <small className="local-token-optimiser__error">{errorMessage}</small>}
+        {/* <b>Optimize with Groq</b> */}
+        {/* <small>Your prompt will be sent securely for optimization.</small> */}
+        {optimizing && <small>Optimizing prompt…</small>}
+        {errorMessage && (
+          <small className="local-token-optimiser__error">{errorMessage}</small>
+        )}
         <div className="local-token-optimiser__stats">
           <span>
             Original<strong>{originalCount.toLocaleString()}</strong>
@@ -79,7 +92,12 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
             Saved<strong>{savings}%</strong>
           </span>
         </div>
-        <textarea value={optimized} onChange={(event) => setOptimized(event.target.value)} aria-label="Optimized prompt" readOnly={optimizing} />
+        <textarea
+          value={optimized}
+          onChange={(event) => setOptimized(event.target.value)}
+          aria-label="Optimized prompt"
+          readOnly={optimizing}
+        />
         <div>
           <button type="button" onClick={() => setOpen(false)}>
             Keep Original
@@ -91,7 +109,7 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
               setMessage(optimized);
               setOpen(false);
             }}
-              disabled={optimizing || !optimized.trim() || optimized === message}
+            disabled={optimizing || !optimized.trim() || optimized === message}
           >
             Use optimized
           </button>
