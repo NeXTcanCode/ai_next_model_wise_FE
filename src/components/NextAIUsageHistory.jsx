@@ -181,13 +181,13 @@ export default function NextAIUsageHistory() {
               Last {value}d
             </button>
           ))}
-          <button
+          {/* <button
             type="button"
             className="next-ai-history__export"
             onClick={exportCsv}
           >
             <Download size={15} /> Export CSV
-          </button>
+          </button> */}
         </div>
       </div>
       {loading ? (
@@ -302,7 +302,7 @@ export default function NextAIUsageHistory() {
               tokens
             </p>
           </div>
-          <div className="next-ai-history__conversations">
+          {/* <div className="next-ai-history__conversations">
             <div className="next-ai-history__section-heading">
               <div>
                 <span className="eyebrow">RECENT CONVERSATIONS</span>
@@ -329,18 +329,40 @@ export default function NextAIUsageHistory() {
             ) : (
               <p>No conversation usage in this period.</p>
             )}
-          </div>
+          </div> */}
         </>
       )}
     </section>
   );
 }
 function Metric({ icon, label, value }) {
+  const text = String(value);
+  const numeric = Number(text.replace(/[^\d.-]/g, ""));
+  const suffix = text.replace(/^[\d,.-]+\s*/, "");
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (!Number.isFinite(numeric)) return undefined;
+    const start = performance.now();
+    const duration = 850;
+    let frame;
+    const animate = (now) => {
+      const progress = Math.min(1, (now - start) / duration);
+      setDisplay(Math.round(numeric * (1 - Math.pow(1 - progress, 3))));
+      if (progress < 1) frame = requestAnimationFrame(animate);
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [numeric]);
   return (
     <div>
       <span>{icon}</span>
-      <small>{label}</small>
-      <b>{value}</b>
+      <div>
+        <small>{label}</small>
+        <b>
+          {Number.isFinite(numeric) ? display.toLocaleString() : value}
+          {suffix && ` ${suffix}`}
+        </b>
+      </div>
     </div>
   );
 }

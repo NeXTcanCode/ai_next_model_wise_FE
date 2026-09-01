@@ -101,20 +101,28 @@ function Shell({
     <div className="app-shell">
       {isNextAI ? (
         <NextAISidebar
+          menu={menu}
+          setMenu={setMenu}
           activeChatId={null}
-          onSelectChat={(id) =>
+          onSelectChat={(id) => {
+            setMenu(false);
             window.dispatchEvent(
               new CustomEvent("next-ai:select", { detail: id })
-            )
-          }
-          onNewChat={() => window.dispatchEvent(new Event("next-ai:new"))}
-          onSkill={(prompt) =>
+            );
+          }}
+          onNewChat={() => {
+            setMenu(false);
+            window.dispatchEvent(new Event("next-ai:new"));
+          }}
+          onSkill={(prompt) => {
+            setMenu(false);
             window.dispatchEvent(
               new CustomEvent("next-ai:skill", { detail: prompt })
-            )
-          }
+            );
+          }}
           onBack={() => changeView("recommend")}
           onLogout={async () => {
+            setMenu(false);
             await api("/api/v1/auth/logout", { method: "POST" }).catch(
               () => {}
             );
@@ -177,14 +185,14 @@ function Shell({
           <div className="header-actions">
             {/* NeXT AI usage summary is intentionally held for a better UX decision.
                 Restore this block when the usage presentation is finalized. */}
-            {isNextAI && !isNextAIHistory && (
+            {/* {isNextAI && !isNextAIHistory && (
               <button
                 className="text-button"
                 onClick={() => navigate("/next_ai/history")}
               >
                 View history
               </button>
-            )}
+            )} */}
             {!isNextAI && (
               <>
                 <StatusSummary

@@ -6,8 +6,10 @@ const usageTitle = (usage) => {
   if (!usage) return "Token usage unavailable";
   const input = usage.prompt_tokens ?? usage.input_tokens;
   const output = usage.completion_tokens ?? usage.output_tokens;
-  const cache = usage.prompt_tokens_details?.cached_tokens ?? usage.cached_tokens ?? usage.cache_read_input_tokens ?? 0;
-  return `Input tokens: ${input ?? "—"}\nOutput tokens: ${output ?? "—"}\nCache tokens: ${cache}`;
+  const cache = usage.prompt_tokens_details?.cached_tokens ?? usage.cached_tokens ?? usage.cache_read_input_tokens;
+  const provider = usage.provider || "OpenRouter";
+  const source = usage.providerReported === false ? "Estimated" : "Provider reported";
+  return `Input tokens: ${input ?? "—"}\nOutput tokens: ${output ?? "—"}\nCache tokens: ${cache ?? "—"}\nProvider: ${provider}\nUsage source: ${source}`;
 };
 
 export default function ChatMessages({ messages, feedback, onCopy, onEdit, onFeedback, onRegenerate, onRetry }) {
