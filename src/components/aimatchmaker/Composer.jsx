@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import BrowserVoiceInput from "../BrowserVoiceInput";
 import LocalImageOCR from "./LocalImageOCR";
+import LocalTokenOptimiser from "./LocalTokenOptimiser";
 
 export default function Composer({
   inputRef,
@@ -102,7 +103,11 @@ export default function Composer({
         />
       )}
       <div className="ai_match_maker__composer-actions">
-        <LocalImageOCR onTextExtracted={(text) => setMessage((current) => current ? `${current}\n\n${text}` : text)} />
+        <LocalImageOCR
+          onTextExtracted={(text) =>
+            setMessage((current) => (current ? `${current}\n\n${text}` : text))
+          }
+        />
         <BrowserVoiceInput
           disabled={isResponding}
           onListeningChange={setIsVoiceListening}
@@ -200,6 +205,7 @@ export default function Composer({
               "Selected model"}
           </span>
         )}
+      <LocalTokenOptimiser message={message} setMessage={setMessage} />
       <small>NeXT AI currently supports text-based conversations</small>
     </form>
   );

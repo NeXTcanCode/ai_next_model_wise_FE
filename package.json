@@ -11,6 +11,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.12.0",
     "@vitejs/plugin-react": "latest",
+    "js-tiktoken": "^1.0.21",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
