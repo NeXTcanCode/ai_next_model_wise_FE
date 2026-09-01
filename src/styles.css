@@ -171,8 +171,8 @@ nav {
   display: flex;
   justify-content: flex-end;
   position: fixed;
-  /* right: max(16px, calc((100vw - 248px - 768px) / 2)); */
-  bottom: 175px;
+  right: max(16px, calc((100vw - 248px - 768px) / 2));
+  bottom: 212px;
   z-index: 11;
   width: auto;
   min-height: 30px;
@@ -371,14 +371,24 @@ nav {
 }
 .ai_match_maker__annotations {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  flex-wrap: nowrap;
   gap: 6px;
-  margin: 0 12px 6px;
-  max-height: 56px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex: 0 0 auto;
-  min-height: 0;
+  width: 100%;
+  height: 30px;
+  min-height: 30px;
+  margin: 0 0 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 0 0 30px;
+  scrollbar-width: none;
+}
+.ai_match_maker__annotations::-webkit-scrollbar {
+  display: none;
+}
+.ai_match_maker__annotations.is-empty {
+  visibility: hidden;
+  pointer-events: none;
 }
 .ai_match_maker__annotations button {
   padding: 4px 8px;
@@ -397,7 +407,7 @@ nav {
 .local-token-optimiser {
   position: relative;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   min-height: 28px;
   margin-top: 4px;
 }
@@ -428,7 +438,8 @@ nav {
 .local-token-optimiser__panel {
   position: absolute;
   z-index: 10;
-  right: 0;
+  /* right: 0; */
+  left: 0;
   bottom: 34px;
   width: 320px;
   padding: 14px;
@@ -1096,7 +1107,7 @@ nav {
 @media (max-width: 600px) {
   .ai_match_maker__conversation-toolbar {
     right: 16px;
-    bottom: 155px;
+    /* bottom: 155px; */
   }
   .ai_match_maker__model-hint {
     right: 38px;
@@ -2262,7 +2273,7 @@ textarea:focus {
 }
 @media (max-width: 1191px) {
   .ai_match_maker__conversation-toolbar {
-    /* right: max(16px, calc((100vw - 768px) / 2)); */
+    right: max(16px, calc((100vw - 768px) / 2));
   }
   .app-shell {
     height: auto;
@@ -2395,6 +2406,34 @@ textarea:focus {
 }
 .auth-card input:focus {
   border-color: #8877ee;
+}
+.auth-card label:has(.auth-password-toggle) {
+  position: relative;
+}
+.auth-password-toggle {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #918a9d;
+  cursor: pointer;
+}
+.auth-password-toggle:hover {
+  background: #f3f0fa;
+  color: #5f4fd0;
+}
+.auth-password-toggle:focus-visible {
+  outline: 2px solid #8877ee;
+  outline-offset: 1px;
+}
+.auth-card label:has(.auth-password-toggle) input {
+  padding-right: 46px;
 }
 .auth-card .primary {
   margin-top: 23px;

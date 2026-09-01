@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { ArrowRight, Sparkles } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Sparkles } from "lucide-react";
 import { api } from "../lib/api";
 
 export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
   const [register, setRegister] = useState(false);
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const submit = async (event) => {
     event?.preventDefault();
@@ -68,9 +69,18 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
               onChange={(event) =>
                 setForm({ ...form, password: event.target.value })
               }
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="••••••••"
             />
+            <button
+              className="auth-password-toggle"
+              type="button"
+              onClick={() => setShowPassword((visible) => !visible)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              title={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
           </label>
           {errorMessage && <p className="error-message">{errorMessage}</p>}
           <button className="primary" type="submit" disabled={pending}>
