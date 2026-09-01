@@ -369,6 +369,31 @@ nav {
   color: #6857d8;
   font: 600 10px "DM Mono";
 }
+.ai_match_maker__annotations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 12px 6px;
+  max-height: 56px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.ai_match_maker__annotations button {
+  padding: 4px 8px;
+  border: 1px solid #ddd6f0;
+  border-radius: 999px;
+  background: #f6f3ff;
+  color: #6655cd;
+  cursor: pointer;
+  font: 500 10px "DM Sans";
+  flex-shrink: 0;
+}
+.ai_match_maker__annotations button:hover {
+  background: #ede6ff;
+  border-color: #c4b5e0;
+}
 .local-token-optimiser {
   position: relative;
   display: flex;
@@ -801,7 +826,8 @@ nav {
   color: #7463e8;
 }
 .ai_match_maker__composer {
-  min-height: 143px;
+  /* min-height: 143px; */
+  max-height: 175px;
   width: min(768px, 100%);
   position: relative;
   flex: 0 0 auto;

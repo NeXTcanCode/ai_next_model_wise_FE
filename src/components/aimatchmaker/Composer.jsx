@@ -38,6 +38,8 @@ export default function Composer({
   selectedModel,
   models,
   skills = [],
+  annotations = [],
+  setAnnotations,
 }) {
   const slashQuery = message.startsWith("/")
     ? message.slice(1).split(/\s/)[0].toLowerCase()
@@ -80,6 +82,7 @@ export default function Composer({
         rows={1}
         aria-label="Message NeXT AI"
       />
+      {annotations.length > 0 && <div className="ai_match_maker__annotations" aria-label="Selected annotations">{annotations.map((annotation, index) => <button type="button" key={annotation.id} onClick={() => setAnnotations((current) => current.filter((item) => item.id !== annotation.id))}>Annotation {index + 1} ×</button>)}</div>}
       {message.startsWith("/") && skillSuggestions.length > 0 && (
         <div className="skill-command-menu" role="listbox">
           {skillSuggestions.slice(0, 8).map((skill) => (
@@ -184,7 +187,7 @@ export default function Composer({
           <button
             className="ai_match_maker__send"
             type="submit"
-            disabled={!message.trim() && !selectedImage}
+            disabled={!message.trim() && !selectedImage && !annotations.length}
             aria-label="Send message"
           >
             <ArrowUp size={17} />

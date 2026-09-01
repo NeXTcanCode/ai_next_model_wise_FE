@@ -47,6 +47,7 @@ export default function AIMatchmaker({
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [selectedExcerpt, setSelectedExcerpt] = useState(null);
+  const [annotations, setAnnotations] = useState([]);
   const [selectedImage, setSelectedImage] = useState(null);
   const [responseFeedback, setResponseFeedback] = useState({});
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -210,13 +211,7 @@ export default function AIMatchmaker({
 
   const addSelectionToChat = () => {
     if (!selectedExcerpt?.text) return;
-    setMessage((current) =>
-      current
-        ? `${current}${current.endsWith("\n") ? "" : "\n\n"}${
-            selectedExcerpt.text
-          }`
-        : selectedExcerpt.text
-    );
+    setAnnotations((current) => current.some((item) => item.text === selectedExcerpt.text) ? current : [...current, { id: `annotation-${Date.now()}`, text: selectedExcerpt.text }]);
     setSelectedExcerpt(null);
     window.getSelection()?.removeAllRanges();
     window.requestAnimationFrame(() => {
@@ -285,8 +280,8 @@ export default function AIMatchmaker({
   const handleSend = async (event) => {
     event.preventDefault();
     const imageToSend = selectedImage;
-    const promptToSend =
-      message.trim() || (imageToSend ? "Describe this image." : "");
+    const annotationContext = annotations.length ? `Regarding these selected sections:\n\n${annotations.map((item, index) => `[Annotation ${index + 1}]\n${item.text}`).join("\n\n")}\n\n` : "";
+    const promptToSend = `${annotationContext}${message.trim()}`.trim() || (imageToSend ? "Describe this image." : "");
     if (!promptToSend || isResponding) return;
 
     let activeConversationId = conversationId;
@@ -327,6 +322,7 @@ export default function AIMatchmaker({
     setEditingMessageId(null);
     setSelectedExcerpt(null);
     setMessage("");
+    setAnnotations([]);
     setSelectedImage(null);
     setIsResponding(true);
     const abortController = new AbortController();
@@ -483,6 +479,7 @@ export default function AIMatchmaker({
     setMessage("");
     setSelectedImage(null);
     setSelectedExcerpt(null);
+    setAnnotations([]);
     setSelectionMessage("");
     setIsSelectingModel(false);
     setEditingMessageId(null);
@@ -617,6 +614,8 @@ export default function AIMatchmaker({
         imageInputRef={imageInputRef}
         message={message}
         setMessage={setMessage}
+        annotations={annotations}
+        setAnnotations={setAnnotations}
         selectedImage={selectedImage}
         setSelectedImage={setSelectedImage}
         chooseImage={chooseImage}

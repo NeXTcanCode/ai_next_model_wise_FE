@@ -16,7 +16,7 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         register ? "/api/v1/auth/register" : "/api/v1/auth/login",
         { method: "POST", body: JSON.stringify(form) }
       );
-      onLogin(data.user);
+      onLogin(data.user, data.token);
     } catch (error) {
       setErrorMessage(error.message);
     } finally {

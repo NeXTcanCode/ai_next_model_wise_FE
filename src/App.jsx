@@ -23,7 +23,7 @@ import SkillPage from "./components/skills/SkillPage";
 import SkillsPage from "./components/skills/SkillsPage";
 import NextAIUsageHistory from "./components/NextAIUsageHistory";
 import StatusSummary from "./components/StatusSummary";
-import { api } from "./lib/api";
+import { api, clearAuthToken, setAuthToken } from "./lib/api";
 import { normalizeRanking, recommendationResult } from "./lib/recommendations";
 import { clearUser, setUser } from "./store";
 
@@ -130,6 +130,7 @@ function Shell({
             await api("/api/v1/auth/logout", { method: "POST" }).catch(
               () => {}
             );
+            clearAuthToken();
             localStorage.removeItem("modelwise_user");
             dispatch(clearUser());
           }}
@@ -147,6 +148,7 @@ function Shell({
             await api("/api/v1/auth/logout", { method: "POST" }).catch(
               () => {}
             );
+            clearAuthToken();
             localStorage.removeItem("modelwise_user");
             dispatch(clearUser());
           }}
@@ -474,7 +476,8 @@ function App() {
   if (!user)
     return (
       <Auth
-        onLogin={(account) => {
+        onLogin={(account, token) => {
+          setAuthToken(token);
           localStorage.setItem("modelwise_user", JSON.stringify(account));
           dispatch(setUser(account));
         }}
