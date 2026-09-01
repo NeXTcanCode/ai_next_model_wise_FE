@@ -33,74 +33,75 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
       </div>
       <div className="auth-card">
         <form onSubmit={submit}>
-        <span className="eyebrow">
-          {register ? "CREATE YOUR WORKSPACE" : "WELCOME BACK"}
-        </span>
-        <h1>Not Every Prompt Needs a Flagship Model.</h1>
-        <p>Find the right AI model for every task.</p>
-        {register && (
+          <span className="eyebrow">
+            {register ? "CREATE YOUR WORKSPACE" : "WELCOME BACK"}
+          </span>
+          <h1>Not Every Prompt Needs a Flagship Model.</h1>
+          <p>Find the right AI model for every task.</p>
+          {register && (
+            <label>
+              Name
+              <input
+                value={form.name}
+                onChange={(event) =>
+                  setForm({ ...form, name: event.target.value })
+                }
+                placeholder="name"
+              />
+            </label>
+          )}
           <label>
-            Name
+            Email
             <input
-              value={form.name}
+              value={form.email}
               onChange={(event) =>
-                setForm({ ...form, name: event.target.value })
+                setForm({ ...form, email: event.target.value })
               }
-              placeholder="Alex Kim"
+              type="email"
+              placeholder="you@example.com"
             />
           </label>
-        )}
-        <label>
-          Email
-          <input
-            value={form.email}
-            onChange={(event) =>
-              setForm({ ...form, email: event.target.value })
-            }
-            type="email"
-            placeholder="you@example.com"
-          />
-        </label>
-        <label>
-          Password
-          <input
-            value={form.password}
-            onChange={(event) =>
-              setForm({ ...form, password: event.target.value })
-            }
-            type="password"
-            placeholder="••••••••"
-          />
-        </label>
-        {errorMessage && <p className="error-message">{errorMessage}</p>}
-        <button className="primary" type="submit" disabled={pending}>
-          {pending
-            ? register
-              ? "Creating your account…"
-              : "Signing you in…"
-            : register
-              ? "Create account"
-              : "Continue"} <ArrowRight size={17} />
-        </button>
-        <small className="auth-foot">
-          {register ? "Already have an account?" : "New to modelwise?"}{" "}
-          <button
-            type="button"
-            onClick={() => {
-              setRegister(!register);
-              setForm((current) => ({ ...current, password: "" }));
-            }}
-            disabled={pending}
-          >
+          <label>
+            Password
+            <input
+              value={form.password}
+              onChange={(event) =>
+                setForm({ ...form, password: event.target.value })
+              }
+              type="password"
+              placeholder="••••••••"
+            />
+          </label>
+          {errorMessage && <p className="error-message">{errorMessage}</p>}
+          <button className="primary" type="submit" disabled={pending}>
             {pending
               ? register
-                ? "Creating account…"
-                : "Signing in…"
+                ? "Creating your account…"
+                : "Signing you in…"
               : register
+              ? "Create account"
+              : "Continue"}{" "}
+            <ArrowRight size={17} />
+          </button>
+          <small className="auth-foot">
+            {register ? "Already have an account?" : "New to modelwise?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setRegister(!register);
+                setForm((current) => ({ ...current, password: "" }));
+              }}
+              disabled={pending}
+            >
+              {pending
+                ? register
+                  ? "Creating account…"
+                  : "Signing in…"
+                : register
                 ? "Sign in"
                 : "Create an account"}
-          </button>
-        </small>
+            </button>
+          </small>
         </form>
       </div>
       <span className="auth-note">
