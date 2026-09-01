@@ -112,6 +112,10 @@ function Shell({
           }}
           onNewChat={() => {
             setMenu(false);
+            if (isNextAIHistory) {
+              navigate("/next_ai");
+              return;
+            }
             window.dispatchEvent(new Event("next-ai:new"));
           }}
           onSkill={(prompt) => {
