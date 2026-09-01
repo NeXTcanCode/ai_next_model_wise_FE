@@ -1665,6 +1665,8 @@ textarea:focus {
   font-size: 11px;
   line-height: 1.4;
 }
+.next-ai-sidebar__search { display: flex; align-items: center; gap: 8px; margin: 18px 7px 4px; padding: 9px 10px; border: 1px solid #e5e0f1; border-radius: 10px; color: #9a94aa; background: #fff; }
+.next-ai-sidebar__search input { min-width: 0; width: 100%; border: 0; outline: 0; background: transparent; color: #514a68; font: 12px "DM Sans"; }
 .next-ai-sidebar__skill-form {
   display: grid;
   gap: 6px;

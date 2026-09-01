@@ -6,7 +6,8 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
   const [register, setRegister] = useState(false);
   const [pending, setPending] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
-  const submit = async () => {
+  const submit = async (event) => {
+    event?.preventDefault();
     if (pending) return;
     setPending(true);
     setErrorMessage("");
@@ -15,7 +16,6 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         register ? "/api/v1/auth/register" : "/api/v1/auth/login",
         { method: "POST", body: JSON.stringify(form) }
       );
-      localStorage.setItem("modelwise_session", data.token);
       onLogin(data.user);
     } catch (error) {
       setErrorMessage(error.message);
@@ -32,6 +32,7 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         modelwise
       </div>
       <div className="auth-card">
+        <form onSubmit={submit}>
         <span className="eyebrow">
           {register ? "CREATE YOUR WORKSPACE" : "WELCOME BACK"}
         </span>
@@ -72,7 +73,7 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
           />
         </label>
         {errorMessage && <p className="error-message">{errorMessage}</p>}
-        <button className="primary" onClick={submit} disabled={pending}>
+        <button className="primary" type="submit" disabled={pending}>
           {pending
             ? register
               ? "Creating your account…"
@@ -83,7 +84,14 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
         </button>
         <small className="auth-foot">
           {register ? "Already have an account?" : "New to modelwise?"}{" "}
-          <button onClick={() => setRegister(!register)} disabled={pending}>
+          <button
+            type="button"
+            onClick={() => {
+              setRegister(!register);
+              setForm((current) => ({ ...current, password: "" }));
+            }}
+            disabled={pending}
+          >
             {pending
               ? register
                 ? "Creating account…"
@@ -93,6 +101,7 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
                 : "Create an account"}
           </button>
         </small>
+        </form>
       </div>
       <span className="auth-note">
         Built by{" "}

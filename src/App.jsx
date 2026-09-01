@@ -1,5 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -18,10 +24,7 @@ import SkillsPage from "./components/skills/SkillsPage";
 import NextAIUsageHistory from "./components/NextAIUsageHistory";
 import StatusSummary from "./components/StatusSummary";
 import { api } from "./lib/api";
-import {
-  normalizeRanking,
-  recommendationResult,
-} from "./lib/recommendations";
+import { normalizeRanking, recommendationResult } from "./lib/recommendations";
 import { clearUser, setUser } from "./store";
 
 function Shell({
@@ -56,12 +59,39 @@ function Shell({
 }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const isSkill = ["/summarise", "/rewrite", "/explain", "/translate", "/debug", "/generate-tests"].includes(location.pathname) || location.pathname.startsWith("/skills/");
+  const isSkill =
+    [
+      "/summarise",
+      "/rewrite",
+      "/explain",
+      "/translate",
+      "/debug",
+      "/generate-tests",
+    ].includes(location.pathname) || location.pathname.startsWith("/skills/");
   const isNextAIHistory = location.pathname === "/next_ai/history";
-  const isNextAI = location.pathname === "/next_ai" || isSkill || isNextAIHistory;
+  const isNextAI =
+    location.pathname === "/next_ai" || isSkill || isNextAIHistory;
   const currentView = location.pathname === "/skills" ? "skills" : view;
   const [nextAIUsage, setNextAIUsage] = useState({ tokens: 0, messages: 0 });
-  useEffect(() => { if (!isNextAI) return; api("/api/v1/usage/history?days=7").then((data) => setNextAIUsage((data.events || []).reduce((total, event) => ({ tokens: total.tokens + (event.inputTokens || 0) + (event.outputTokens || 0), messages: total.messages + 1 }), { tokens: 0, messages: 0 }))).catch(() => {}); }, [isNextAI]);
+  useEffect(() => {
+    if (!isNextAI) return;
+    api("/api/v1/usage/history?days=7")
+      .then((data) =>
+        setNextAIUsage(
+          (data.events || []).reduce(
+            (total, event) => ({
+              tokens:
+                total.tokens +
+                (event.inputTokens || 0) +
+                (event.outputTokens || 0),
+              messages: total.messages + 1,
+            }),
+            { tokens: 0, messages: 0 }
+          )
+        )
+      )
+      .catch(() => {});
+  }, [isNextAI]);
   const changeView = (nextView) => {
     const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;
     setView(nextView);
@@ -69,40 +99,62 @@ function Shell({
   };
   return (
     <div className="app-shell">
-      {isNextAI ? <NextAISidebar
-        activeChatId={null}
-        onSelectChat={(id) => window.dispatchEvent(new CustomEvent("next-ai:select", { detail: id }))}
-        onNewChat={() => window.dispatchEvent(new Event("next-ai:new"))}
-        onSkill={(prompt) => window.dispatchEvent(new CustomEvent("next-ai:skill", { detail: prompt }))}
+      {isNextAI ? (
+        <NextAISidebar
+          activeChatId={null}
+          onSelectChat={(id) =>
+            window.dispatchEvent(
+              new CustomEvent("next-ai:select", { detail: id })
+            )
+          }
+          onNewChat={() => window.dispatchEvent(new Event("next-ai:new"))}
+          onSkill={(prompt) =>
+            window.dispatchEvent(
+              new CustomEvent("next-ai:skill", { detail: prompt })
+            )
+          }
           onBack={() => changeView("recommend")}
           onLogout={async () => {
-            await api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
-            localStorage.removeItem("modelwise_session");
+            await api("/api/v1/auth/logout", { method: "POST" }).catch(
+              () => {}
+            );
             localStorage.removeItem("modelwise_user");
             dispatch(clearUser());
           }}
-      /> : <Sidebar
-        user={user}
-        menu={menu}
-        setMenu={setMenu}
-        view={currentView}
+        />
+      ) : (
+        <Sidebar
+          user={user}
+          menu={menu}
+          setMenu={setMenu}
+          view={currentView}
           setView={changeView}
-        usage={usage}
-        rankedModels={rankedModels}
-        onLogout={async () => {
-          await api("/api/v1/auth/logout", { method: "POST" }).catch(() => {});
-          localStorage.removeItem("modelwise_session");
-          localStorage.removeItem("modelwise_user");
-          dispatch(clearUser());
-        }}
-        />}
+          usage={usage}
+          rankedModels={rankedModels}
+          onLogout={async () => {
+            await api("/api/v1/auth/logout", { method: "POST" }).catch(
+              () => {}
+            );
+            localStorage.removeItem("modelwise_user");
+            dispatch(clearUser());
+          }}
+        />
+      )}
       <main>
         <header>
           <button className="mobile-menu" onClick={() => setMenu(!menu)}>
             <span aria-hidden>☰</span>
           </button>
           <div>
-            {isNextAIHistory && <button type="button" className="next-ai-history__back" onClick={() => navigate("/next_ai")}>← Back to NeXT AI</button>}
+            {isNextAIHistory && (
+              <button
+                type="button"
+                className="next-ai-history__back"
+                onClick={() => navigate("/next_ai")}
+              >
+                ← Back to NeXT AI
+              </button>
+            )}
             <span className="eyebrow">
               {currentView === "recommend"
                 ? "WORKSPACE / RECOMMEND"
@@ -113,33 +165,48 @@ function Shell({
                 ? "Find your best model"
                 : currentView === "history"
                 ? "Recommendation history"
-              : currentView === "ranking"
-              ? "Model ranking"
-              : currentView === "skills"
-              ? "Skills"
-              : currentView === "bot"
-              ? "NeXT AI"
-              : "My models"}
+                : currentView === "ranking"
+                ? "Model ranking"
+                : currentView === "skills"
+                ? "Skills"
+                : currentView === "bot"
+                ? "NeXT AI"
+                : "My models"}
             </h1>
           </div>
           <div className="header-actions">
             {/* NeXT AI usage summary is intentionally held for a better UX decision.
                 Restore this block when the usage presentation is finalized. */}
-            {!isNextAI && <>
-              <StatusSummary
-                tokens={historyTotals.tokens}
-                cost={historyTotals.cost}
-                label="recommendation tokens"
-                emptyLabel="Recommendation history"
-              />
-              <button className="text-button" onClick={() => changeView("history")}>
-                View history
-              </button>
-            </>}
+            {!isNextAI && (
+              <>
+                <StatusSummary
+                  tokens={historyTotals.tokens}
+                  cost={historyTotals.cost}
+                  label="recommendation tokens"
+                  emptyLabel="Recommendation history"
+                />
+                <button
+                  className="text-button"
+                  onClick={() => changeView("history")}
+                >
+                  View history
+                </button>
+              </>
+            )}
           </div>
         </header>
-        {location.pathname === "/skills" ? <SkillsPage /> : isNextAIHistory ? <NextAIUsageHistory /> : isSkill ? <SkillPage /> : view === "bot" ? (
-          <AIMatchmaker onUsageRefresh={onUsageRefresh} userName={user.name} onBackToRecommend={() => changeView("recommend")} />
+        {location.pathname === "/skills" ? (
+          <SkillsPage />
+        ) : isNextAIHistory ? (
+          <NextAIUsageHistory />
+        ) : isSkill ? (
+          <SkillPage />
+        ) : view === "bot" ? (
+          <AIMatchmaker
+            onUsageRefresh={onUsageRefresh}
+            userName={user.name}
+            onBackToRecommend={() => changeView("recommend")}
+          />
         ) : view === "recommend" ? (
           <Recommend
             prompt={prompt}
@@ -184,7 +251,17 @@ function App() {
   const dispatch = useDispatch();
   const [view, setView] = useState(() => {
     const path = window.location.pathname;
-    return path === "/ranking" ? "ranking" : path === "/next_ai" ? "bot" : path === "/history" ? "history" : path === "/models" ? "models" : path === "/skills" ? "skills" : "recommend";
+    return path === "/ranking"
+      ? "ranking"
+      : path === "/next_ai"
+      ? "bot"
+      : path === "/history"
+      ? "history"
+      : path === "/models"
+      ? "models"
+      : path === "/skills"
+      ? "skills"
+      : "recommend";
   });
   const navigateView = (nextView) => {
     const path = nextView === "bot" ? "/next_ai" : `/${nextView}`;
@@ -200,13 +277,20 @@ function App() {
   const [menu, setMenu] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [modelModalOpen, setModelModalOpen] = useState(false);
-  const [usage, setUsage] = useState({ usedUnits: 0, limitUnits: 40000, percent: 0, resetAt: null });
+  const [usage, setUsage] = useState({
+    usedUnits: 0,
+    limitUnits: 40000,
+    percent: 0,
+    resetAt: null,
+  });
   const [historyTotals, setHistoryTotals] = useState({ tokens: 0, cost: 0 });
   const [isRecommending, setIsRecommending] = useState(false);
 
   const recommendInFlight = useRef(false);
   const refreshUsage = () => {
-    api("/api/v1/usage").then(setUsage).catch(() => {});
+    api("/api/v1/usage")
+      .then(setUsage)
+      .catch(() => {});
   };
   const updatePrompt = (value) => {
     setPrompt(value);
@@ -225,17 +309,16 @@ function App() {
   useEffect(() => {
     const handleUnauthorized = () => dispatch(clearUser());
     window.addEventListener("modelwise:unauthorized", handleUnauthorized);
-    return () => window.removeEventListener("modelwise:unauthorized", handleUnauthorized);
+    return () =>
+      window.removeEventListener("modelwise:unauthorized", handleUnauthorized);
   }, [dispatch]);
   useEffect(() => {
-    if (!localStorage.getItem("modelwise_session")) return;
     api("/api/v1/auth/me", { timeoutMs: 12000 })
       .then((data) => {
         localStorage.setItem("modelwise_user", JSON.stringify(data.user));
         dispatch(setUser(data.user));
       })
       .catch(() => {
-        localStorage.removeItem("modelwise_session");
         localStorage.removeItem("modelwise_user");
         dispatch(clearUser());
       });
@@ -253,8 +336,9 @@ function App() {
     api("/api/v1/recommendations?limit=100")
       .then((data) => {
         const items = data.items || [];
-        const latestRanked = items.find((item) =>
-          Array.isArray(item.result?.ranking) && item.result.ranking.length
+        const latestRanked = items.find(
+          (item) =>
+            Array.isArray(item.result?.ranking) && item.result.ranking.length
         );
         setRankedModels(
           latestRanked
@@ -277,7 +361,13 @@ function App() {
       })
       .catch(() => {});
   }, [user]);
-  const addModel = async (name, providerName, price, openRouterModelId, outputPrice) => {
+  const addModel = async (
+    name,
+    providerName,
+    price,
+    openRouterModelId,
+    outputPrice
+  ) => {
     if (!name?.trim()) return;
     try {
       const data = await api("/api/v1/models", {
@@ -375,70 +465,76 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/ranking" element={
-          <Shell
-            user={user}
-            dispatch={dispatch}
-            view={view}
-            setView={navigateView}
-            menu={menu}
-            setMenu={setMenu}
-            usage={usage}
-            historyTotals={historyTotals}
-            models={models}
-            rankedModels={rankedModels}
-            prompt={prompt}
-            setPrompt={updatePrompt}
-            context={context}
-            setContext={updateContext}
-            contextDetails={contextDetails}
-            setContextDetails={updateContextDetails}
-            result={result}
-            setResult={setResult}
-            modelModalOpen={modelModalOpen}
-            setModelModalOpen={setModelModalOpen}
-            errorMessage={errorMessage}
-            setErrorMessage={setErrorMessage}
-            addModel={addModel}
-            removeModel={removeModel}
-            recommend={recommend}
-            isRecommending={isRecommending}
-            onUsageRefresh={refreshUsage}
-            onBackToRecommend={() => navigateView("recommend")}
-          />
-        } />
-        <Route path="*" element={
-          <Shell
-            user={user}
-            dispatch={dispatch}
-            view={view}
-            setView={navigateView}
-            menu={menu}
-            setMenu={setMenu}
-            usage={usage}
-            historyTotals={historyTotals}
-            models={models}
-            rankedModels={rankedModels}
-            prompt={prompt}
-            setPrompt={updatePrompt}
-            context={context}
-            setContext={updateContext}
-            contextDetails={contextDetails}
-            setContextDetails={updateContextDetails}
-            result={result}
-            setResult={setResult}
-            modelModalOpen={modelModalOpen}
-            setModelModalOpen={setModelModalOpen}
-            errorMessage={errorMessage}
-            setErrorMessage={setErrorMessage}
-            addModel={addModel}
-            removeModel={removeModel}
-            recommend={recommend}
-            isRecommending={isRecommending}
-            onUsageRefresh={refreshUsage}
-            onBackToRecommend={() => navigateView("recommend")}
-          />
-        } />
+        <Route
+          path="/ranking"
+          element={
+            <Shell
+              user={user}
+              dispatch={dispatch}
+              view={view}
+              setView={navigateView}
+              menu={menu}
+              setMenu={setMenu}
+              usage={usage}
+              historyTotals={historyTotals}
+              models={models}
+              rankedModels={rankedModels}
+              prompt={prompt}
+              setPrompt={updatePrompt}
+              context={context}
+              setContext={updateContext}
+              contextDetails={contextDetails}
+              setContextDetails={updateContextDetails}
+              result={result}
+              setResult={setResult}
+              modelModalOpen={modelModalOpen}
+              setModelModalOpen={setModelModalOpen}
+              errorMessage={errorMessage}
+              setErrorMessage={setErrorMessage}
+              addModel={addModel}
+              removeModel={removeModel}
+              recommend={recommend}
+              isRecommending={isRecommending}
+              onUsageRefresh={refreshUsage}
+              onBackToRecommend={() => navigateView("recommend")}
+            />
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <Shell
+              user={user}
+              dispatch={dispatch}
+              view={view}
+              setView={navigateView}
+              menu={menu}
+              setMenu={setMenu}
+              usage={usage}
+              historyTotals={historyTotals}
+              models={models}
+              rankedModels={rankedModels}
+              prompt={prompt}
+              setPrompt={updatePrompt}
+              context={context}
+              setContext={updateContext}
+              contextDetails={contextDetails}
+              setContextDetails={updateContextDetails}
+              result={result}
+              setResult={setResult}
+              modelModalOpen={modelModalOpen}
+              setModelModalOpen={setModelModalOpen}
+              errorMessage={errorMessage}
+              setErrorMessage={setErrorMessage}
+              addModel={addModel}
+              removeModel={removeModel}
+              recommend={recommend}
+              isRecommending={isRecommending}
+              onUsageRefresh={refreshUsage}
+              onBackToRecommend={() => navigateView("recommend")}
+            />
+          }
+        />
       </Routes>
       <ToastContainer position="top-right" autoClose={4000} />
     </BrowserRouter>

@@ -37,7 +37,8 @@ export const loadExchangeRates = createAsyncThunk(
 );
 
 const readStoredUser = () => {
-  if (!localStorage.getItem("modelwise_session")) return null;
+  // Remove the legacy client-side JWT; authentication is handled by the httpOnly cookie.
+  localStorage.removeItem("modelwise_session");
   try {
     return JSON.parse(localStorage.getItem("modelwise_user") || "null");
   } catch {
