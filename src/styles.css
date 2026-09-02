@@ -172,7 +172,7 @@ nav {
   justify-content: flex-end;
   position: fixed;
   right: max(16px, calc((100vw - 248px - 768px) / 2));
-  bottom: 212px;
+  
   z-index: 11;
   width: auto;
   min-height: 30px;
@@ -828,8 +828,8 @@ nav {
 }
 .ai_match_maker__composer {
   box-sizing: border-box;
-  height: 175px;
-  min-height: 175px;
+
+  min-height: 220px;
   /* max-height: 175px; */
   width: min(768px, 100%);
   position: relative;
