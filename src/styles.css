@@ -1956,7 +1956,7 @@ textarea:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 150px;
+  max-width: 140px;
 }
 .next-ai-sidebar__chats button i {
   display: none;
