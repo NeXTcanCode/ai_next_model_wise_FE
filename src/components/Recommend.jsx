@@ -67,7 +67,7 @@ export function FormPanel({
         }}
         placeholder="e.g. Review this authentication flow and identify why expired tokens aren't redirecting users..."
       />
-      <div className="char-count">{prompt.length} / 20,000</div>
+      <div className="char-count">{prompt.length.toLocaleString()} characters</div>
       <label className="field-label context-label">
         CONTEXT <span>Optional</span>
       </label>

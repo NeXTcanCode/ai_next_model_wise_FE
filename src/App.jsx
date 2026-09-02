@@ -425,8 +425,8 @@ function App() {
   };
   const recommend = async () => {
     if (recommendInFlight.current) return;
-    if (prompt.length < 3 || prompt.length > 20000)
-      return toast.error("Prompt must be 3–20,000 characters.");
+    if (prompt.length < 3)
+      return toast.error("Prompt must be at least 3 characters.");
     recommendInFlight.current = true;
     setIsRecommending(true);
     setResult(null);
