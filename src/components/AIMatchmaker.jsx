@@ -222,6 +222,11 @@ export default function AIMatchmaker({
       input?.setSelectionRange(input.value.length, input.value.length);
     });
   };
+  const askAboutSelection = (question) => {
+    addSelectionToChat();
+    setMessage(question);
+    window.requestAnimationFrame(() => messageInputRef.current?.focus());
+  };
 
   const recommendAndSelectModel = async (prompt = message, signal) => {
     const promptToRecommend = prompt.trim();
@@ -610,7 +615,7 @@ export default function AIMatchmaker({
         )}
         <div ref={conversationEndRef} aria-hidden="true" />
       </div>
-      <SelectionAction selection={selectedExcerpt} onAdd={addSelectionToChat} />
+      <SelectionAction selection={selectedExcerpt} onAdd={addSelectionToChat} onAsk={askAboutSelection} />
       <Composer
         inputRef={messageInputRef}
         imageInputRef={imageInputRef}

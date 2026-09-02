@@ -213,6 +213,26 @@ nav {
   cursor: pointer;
   animation: next-add-to-chat-in 0.12s ease-out;
 }
+.ai_match_maker__selection-box {
+  position: fixed;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 250px;
+  padding: 8px;
+  border: 1px solid #dcd6ed;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(42 31 91 / 18%);
+  animation: next-add-to-chat-in 0.12s ease-out;
+}
+.ai_match_maker__selection-box form { display: flex; gap: 6px; }
+.ai_match_maker__selection-box input { min-width: 0; flex: 1; padding: 8px 9px; border: 1px solid #e5e0f1; border-radius: 8px; outline: 0; font: 12px "DM Sans"; }
+.ai_match_maker__selection-box input:focus { border-color: #8877ed; box-shadow: 0 0 0 3px rgb(136 119 237 / 15%); }
+.ai_match_maker__selection-box form button { padding: 7px 10px; border: 0; border-radius: 8px; background: #7462e5; color: #fff; cursor: pointer; font: 600 11px "DM Sans"; }
+.ai_match_maker__selection-box form button:disabled { opacity: .45; cursor: not-allowed; }
+.ai_match_maker__selection-box .ai_match_maker__add-to-chat { position: static; width: 100%; }
 .ai_match_maker__add-to-chat:hover {
   background: #38333d;
 }
