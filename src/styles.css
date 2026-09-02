@@ -828,7 +828,7 @@ nav {
 }
 .ai_match_maker__composer {
   box-sizing: border-box;
-
+justify-content : space-between;
   min-height: 220px;
   /* max-height: 175px; */
   width: min(768px, 100%);
@@ -895,9 +895,9 @@ nav {
   border: 0;
   box-shadow: none;
   resize: none;
-  height: 28px;
-  min-height: 28px;
-  max-height: 64px;
+  height: 200px;
+  /*min-height: 28px;
+  max-height: 64px; */
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
