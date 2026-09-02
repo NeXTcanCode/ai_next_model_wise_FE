@@ -1876,21 +1876,41 @@ textarea:focus {
   cursor: pointer;
 }
 .next-ai-sidebar__logout {
+  position: sticky;
+  bottom: -22px;
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   margin-top: auto;
-  padding: 16px 8px 4px;
+  margin-bottom: -22px;
+  padding: 15px 9px 14px;
   border: 0;
-  background: transparent;
+  border-top: 1px solid #eeeaf4;
+  background: linear-gradient(180deg, rgb(252 251 254 / 82%), #fcfbfe 28%);
   color: #8f899e;
   cursor: pointer;
   text-align: left;
-  font: 13px "DM Sans";
+  font: 600 12px "DM Sans";
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
 }
 .next-ai-sidebar__logout:hover {
-  color: #5d4dca;
+  background: #fff1f2;
+  color: #c25663;
+}
+.next-ai-sidebar__logout:focus-visible {
+  outline: 2px solid #8877ed;
+  outline-offset: -2px;
+}
+.next-ai-sidebar__logout:active {
+  transform: translateY(1px);
+}
+.next-ai-sidebar__logout svg {
+  color: currentColor;
+  transition: transform 0.18s ease;
+}
+.next-ai-sidebar__logout:hover svg {
+  transform: translateX(2px);
 }
 .next-ai-sidebar__usage {
   margin: 18px 7px 0;
