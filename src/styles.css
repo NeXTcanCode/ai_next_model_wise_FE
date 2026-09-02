@@ -895,7 +895,7 @@ justify-content : space-between;
   border: 0;
   box-shadow: none;
   resize: none;
-  height :160px ;
+  height :160px !important ;
   max-height: 200px !important;
   /*min-height: 28px;
   max-height: 64px; */
