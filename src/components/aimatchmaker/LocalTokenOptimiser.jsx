@@ -21,6 +21,8 @@ const optimizeText = (text) =>
     )
     .join("");
 
+const MIN_TOKENS_TO_OPTIMIZE = 8;
+
 export default function LocalTokenOptimiser({ message, setMessage }) {
   const [open, setOpen] = useState(false);
   const [optimized, setOptimized] = useState("");
@@ -31,7 +33,11 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
   const savings = optimized
     ? Math.max(0, Math.round((1 - optimizedCount / originalCount) * 100))
     : 0;
+  const noImprovement = Boolean(optimized) && savings < 10;
+  const hasMessage = Boolean(message.trim());
+  const canOptimize = hasMessage && originalCount >= MIN_TOKENS_TO_OPTIMIZE;
   const runOptimization = async () => {
+    if (!canOptimize) return;
     setOptimizing(true);
     setErrorMessage("");
     setOptimized("");
@@ -48,15 +54,19 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
       setOptimizing(false);
     }
   };
-  const hasMessage = Boolean(message.trim());
   return (
     <div className={`local-token-optimiser${hasMessage ? "" : " is-empty"}`}>
       <button
         type="button"
         className="local-token-optimiser__trigger"
         onClick={runOptimization}
-        tabIndex={hasMessage ? 0 : -1}
-        title="Count locally and optimize with Groq"
+        tabIndex={canOptimize ? 0 : -1}
+        disabled={!canOptimize}
+        title={
+          canOptimize
+            ? "Optimize your prompts"
+            : `Add a bit more detail (at least ${MIN_TOKENS_TO_OPTIMIZE} tokens) before optimizing`
+        }
       >
         <Gauge size={14} /> {originalCount.toLocaleString()} tokens{" "}
         <Sparkles size={13} /> Optimize
@@ -80,6 +90,12 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
         {optimizing && <small>Optimizing prompt…</small>}
         {errorMessage && (
           <small className="local-token-optimiser__error">{errorMessage}</small>
+        )}
+        {!optimizing && !errorMessage && noImprovement && (
+          <small>
+            Optimized version doesn't save enough (under 10%) — your original is
+            already good.
+          </small>
         )}
         <div className="local-token-optimiser__stats">
           <span>
@@ -109,7 +125,12 @@ export default function LocalTokenOptimiser({ message, setMessage }) {
               setMessage(optimized);
               setOpen(false);
             }}
-            disabled={optimizing || !optimized.trim() || optimized === message}
+            disabled={
+              optimizing ||
+              !optimized.trim() ||
+              optimized === message ||
+              noImprovement
+            }
           >
             Use optimized
           </button>
