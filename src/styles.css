@@ -3190,9 +3190,17 @@ textarea:focus {
   font-size: 12px;
 }
 .next-ai-history__grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
+}
+.next-ai-history__grid > .col-lg-7 {
+  flex: 0 0 calc(58.333333% - 8px);
+  max-width: calc(58.333333% - 8px);
+}
+.next-ai-history__grid > .col-lg-5 {
+  flex: 0 0 calc(41.666667% - 8px);
+  max-width: calc(41.666667% - 8px);
 }
 .next-ai-history__section-heading {
   display: flex;
@@ -3396,6 +3404,11 @@ textarea:focus {
   }
   .next-ai-history__cards {
     grid-template-columns: 1fr;
+  }
+  .next-ai-history__grid > .col-lg-7,
+  .next-ai-history__grid > .col-lg-5 {
+    flex: 0 0 100%;
+    max-width: 100%;
   }
   .next-ai-history__pricing {
     align-items: stretch;

@@ -219,7 +219,7 @@ export default function NextAIUsageHistory() {
             />
           </div>
           <div className="next-ai-history__grid">
-            <div className="next-ai-history__chart">
+            <div className="next-ai-history__chart col-lg-7 md-12 sm-12 col-12">
               <div className="next-ai-history__section-heading">
                 <div>
                   <span className="eyebrow">DAILY VIEW</span>
@@ -245,7 +245,7 @@ export default function NextAIUsageHistory() {
                 <p>No NeXT AI usage in this period.</p>
               )}
             </div>
-            <div className="next-ai-history__trend">
+            <div className="next-ai-history__trend col-lg-5 md-12 sm-12 col-12">
               <span className="eyebrow">WEEKLY SUMMARY</span>
               <h3>Usage trends</h3>
               {weekly.length ? (
