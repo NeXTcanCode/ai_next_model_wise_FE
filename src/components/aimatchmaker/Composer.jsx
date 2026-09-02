@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import {
   ArrowUp,
   ChevronDown,
@@ -49,6 +49,14 @@ export default function Composer({
       ? skills
       : skills.filter((skill) => skill.name.includes(slashQuery));
   const chooseSkill = (skill) => setMessage(`${skill.prompt} `);
+
+  useLayoutEffect(() => {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  }, [message, inputRef]);
+
   return (
     <form className="ai_match_maker__composer" onSubmit={handleSend}>
       {imageChatEnabled && selectedImage && (
@@ -121,7 +129,9 @@ export default function Composer({
           onChange={chooseImage}
         />
       )}
-      <div className="ai_match_maker__composer-actions">
+      <div className="ai_match_maker__composer-row">
+        <LocalTokenOptimiser message={message} setMessage={setMessage} />
+        <div className="ai_match_maker__composer-actions">
         <LocalImageOCR
           onTextExtracted={(text) =>
             setMessage((current) => (current ? `${current}\n\n${text}` : text))
@@ -209,6 +219,7 @@ export default function Composer({
             <ArrowUp size={17} />
           </button>
         )}
+        </div>
       </div>
       {hasManualModelChoice &&
         recommendedModelName &&
@@ -224,7 +235,6 @@ export default function Composer({
               "Selected model"}
           </span>
         )}
-      <LocalTokenOptimiser message={message} setMessage={setMessage} />
       <small>NeXT AI currently supports text-based conversations</small>
     </form>
   );

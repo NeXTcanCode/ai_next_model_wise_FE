@@ -397,9 +397,7 @@ nav {
 .local-token-optimiser {
   position: relative;
   display: flex;
-  justify-content: flex-start;
-  min-height: 28px;
-  margin-top: 4px;
+  align-items: center;
 }
 .local-token-optimiser + small {
   display: block;
@@ -576,6 +574,10 @@ nav {
   left: 3px;
   color: #6d5ce7;
 }
+.ai_match_maker__markdown-numbered { position: relative; padding-left: 22px; counter-increment: response-list; }
+.ai_match_maker__markdown-numbered::before { content: counter(response-list) "."; position: absolute; left: 0; color: #6d5ce7; font-weight: 700; }
+.ai_match_maker__markdown-block { counter-reset: response-list; }
+.ai_match_maker__markdown-block blockquote { margin: 8px 0; padding-left: 12px; border-left: 3px solid #8877ed; color: #6c657c; font-style: italic; }
 .ai_match_maker__code-block {
   margin: 14px 0;
   overflow: hidden;
@@ -828,9 +830,9 @@ nav {
 }
 .ai_match_maker__composer {
   box-sizing: border-box;
-justify-content : space-between;
-  min-height: 220px;
-  /* max-height: 175px; */
+  height: auto;
+  min-height: 96px;
+  max-height: 420px;
   width: min(768px, 100%);
   position: relative;
   flex: 0 0 auto;
@@ -840,10 +842,16 @@ justify-content : space-between;
   isolation: isolate;
   background: #ffffff;
   border: 1px solid #ccc6d6;
-  border-radius: 18px;
-  padding: 12px 13px 9px;
-  box-shadow: 0 12px 36px rgba(51, 38, 93, 0.18),
-    0 2px 8px rgba(51, 38, 93, 0.08);
+  border-radius: 22px;
+  padding: 16px 18px 12px;
+  box-shadow: 0 8px 30px rgba(51, 38, 93, 0.1),
+    0 1px 4px rgba(51, 38, 93, 0.06);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.ai_match_maker__composer:focus-within {
+  border-color: #b6adc4;
+  box-shadow: 0 10px 34px rgba(51, 38, 93, 0.13),
+    0 1px 4px rgba(51, 38, 93, 0.07);
 }
 .ai_match_maker__image-input {
   display: none;
@@ -895,16 +903,16 @@ justify-content : space-between;
   border: 0;
   box-shadow: none;
   resize: none;
-  height :160px !important ;
-  max-height: 200px !important;
-  /*min-height: 28px;
-  max-height: 64px; */
+  height: auto;
+  min-height: 24px;
+  max-height: 320px;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  padding: 1px 2px;
-  font: 14px/1.5 "DM Mono", "SFMono-Regular", Consolas, monospace;
-  letter-spacing: -0.02em;
+  padding: 2px;
+  font: 15px/1.6 "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  letter-spacing: normal;
 }
 .skill-command-menu {
   position: absolute;
@@ -953,12 +961,18 @@ justify-content : space-between;
     transform: translateY(0);
   }
 }
+.ai_match_maker__composer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
 .ai_match_maker__composer-actions {
   position: relative;
   display: flex;
   align-items: center;
   gap: 5px;
-  margin-top: 8px;
   background: #ffffff;
   min-width: 0;
   justify-content: flex-end;
