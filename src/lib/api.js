@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || "https://ai-nex-model-wise-be.onrender.com";
+const API_BASE = import.meta.env.VITE_API_URL || "";
 let memoryToken = null;
 export const setAuthToken = (token) => { memoryToken = token || null; };
 export const clearAuthToken = () => { memoryToken = null; };
