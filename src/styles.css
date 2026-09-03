@@ -598,6 +598,11 @@ nav {
 .ai_match_maker__markdown-numbered::before { content: counter(response-list) "."; position: absolute; left: 0; color: #6d5ce7; font-weight: 700; }
 .ai_match_maker__markdown-block { counter-reset: response-list; }
 .ai_match_maker__markdown-block blockquote { margin: 8px 0; padding-left: 12px; border-left: 3px solid #8877ed; color: #6c657c; font-style: italic; }
+.ai_match_maker__table-wrap { margin: 10px 0; overflow-x: auto; border: 1px solid #e5e0f1; border-radius: 10px; }
+.ai_match_maker__table-wrap table { width: 100%; min-width: 520px; border-collapse: collapse; text-align: left; font-size: 13px; }
+.ai_match_maker__table-wrap th { padding: 10px 12px; background: #f5f2ff; color: #443b68; font-weight: 700; }
+.ai_match_maker__table-wrap td { padding: 10px 12px; border-top: 1px solid #eeeaf4; vertical-align: top; }
+.ai_match_maker__table-wrap tr:nth-child(even) td { background: #fcfbfe; }
 .ai_match_maker__code-block {
   margin: 14px 0;
   overflow: hidden;

@@ -16,7 +16,33 @@ export default function MessageContent({ content }) {
     else if (!lines[i].trim()) { flush(); i++; } else text.push(lines[i++]);
   }
   flush();
-  return <div className="ai_match_maker__formatted-response">{blocks.map((block, bi) => block.type === "code" ? <CodeBlock key={bi} language={block.language} code={block.code} /> : <div className="ai_match_maker__markdown-block" key={bi}>{block.lines.map((line, li) => { const heading = line.match(/^#{1,6}\s+(.+)$/); const bullet = line.match(/^\s*[-*+]\s+(.+)$/); const numbered = line.match(/^\s*\d+[.)]\s+(.+)$/); const quote = line.match(/^\s*>\s?(.*)$/); const node = heading ? <h3>{inline(heading[1])}</h3> : bullet ? <div className="ai_match_maker__markdown-bullet">{inline(bullet[1])}</div> : numbered ? <div className="ai_match_maker__markdown-numbered">{inline(numbered[1])}</div> : quote ? <blockquote>{inline(quote[1])}</blockquote> : inline(line); return <React.Fragment key={li}>{node}{li < block.lines.length - 1 && <br />}</React.Fragment>; })}</div>)}</div>;
+  return <div className="ai_match_maker__formatted-response">{blocks.map((block, bi) => block.type === "code" ? <CodeBlock key={bi} language={block.language} code={block.code} /> : <div className="ai_match_maker__markdown-block" key={bi}>{renderTextBlock(block.lines)}</div>)}</div>;
+}
+
+const tableRow = (line) => line.trim().startsWith("|") || (line.includes("|") && line.split("|").length > 2);
+const tableSeparator = (line) => /^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$/.test(line);
+const tableCells = (line) => line.trim().replace(/^\|\s*|\s*\|$/g, "").split("|").map((cell) => cell.trim());
+
+function renderTextBlock(lines) {
+  const output = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    if (tableRow(lines[i]) && tableSeparator(lines[i + 1] || "")) {
+      const rows = [tableCells(lines[i])];
+      i += 2;
+      while (i < lines.length && tableRow(lines[i]) && !tableSeparator(lines[i])) rows.push(tableCells(lines[i++]));
+      output.push(<div className="ai_match_maker__table-wrap" key={`table-${i}`}><table><thead><tr>{rows[0].map((cell, j) => <th key={j}>{inline(cell)}</th>)}</tr></thead><tbody>{rows.slice(1).map((row, j) => <tr key={j}>{rows[0].map((_, k) => <td key={k}>{inline(row[k] || "")}</td>)}</tr>)}</tbody></table></div>);
+      if (i < lines.length) output.push(<br key={`table-break-${i}`} />);
+      i -= 1;
+      continue;
+    }
+    const heading = lines[i].match(/^#{1,6}\s+(.+)$/);
+    const bullet = lines[i].match(/^\s*[-*+]\s+(.+)$/);
+    const numbered = lines[i].match(/^\s*\d+[.)]\s+(.+)$/);
+    const quote = lines[i].match(/^\s*>\s?(.*)$/);
+    const node = heading ? <h3 key={i}>{inline(heading[1])}</h3> : bullet ? <div className="ai_match_maker__markdown-bullet" key={i}>{inline(bullet[1])}</div> : numbered ? <div className="ai_match_maker__markdown-numbered" key={i}>{inline(numbered[1])}</div> : quote ? <blockquote key={i}>{inline(quote[1])}</blockquote> : <React.Fragment key={i}>{inline(lines[i])}{i < lines.length - 1 && <br />}</React.Fragment>;
+    output.push(node);
+  }
+  return output;
 }
 
 function CodeBlock({ language, code }) {
