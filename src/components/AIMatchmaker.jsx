@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Bot, Plus } from "lucide-react";
-import { api } from "../lib/api";
+import { api, apiStream } from "../lib/api";
 import ChatMessages from "./aimatchmaker/ChatMessages";
 import Composer from "./aimatchmaker/Composer";
 import NewChatModal from "./aimatchmaker/NewChatModal";
@@ -44,6 +44,7 @@ export default function AIMatchmaker({
   const [messages, setMessages] = useState([]);
   const [conversationId, setConversationId] = useState(null);
   const [isResponding, setIsResponding] = useState(false);
+  const [hasStreamStarted, setHasStreamStarted] = useState(false);
   const [isVoiceListening, setIsVoiceListening] = useState(false);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [selectedExcerpt, setSelectedExcerpt] = useState(null);
@@ -332,6 +333,7 @@ export default function AIMatchmaker({
     setAnnotations([]);
     setSelectedImage(null);
     setIsResponding(true);
+    setHasStreamStarted(false);
     const abortController = new AbortController();
     requestAbortControllerRef.current = abortController;
     setSelectionMessage(
@@ -340,50 +342,113 @@ export default function AIMatchmaker({
     if (!imageToSend && !isSelectingModel)
       recommendAndSelectModel(promptToSend, abortController.signal);
     try {
-      let data;
       if (imageToSend) {
         const formData = new FormData();
         formData.append("image", imageToSend.file);
         formData.append("prompt", promptToSend);
         formData.append("messages", JSON.stringify(conversationToSend));
         formData.append("responseMode", responseMode);
-        data = await api("/api/v1/chat/image", {
+        const data = await api("/api/v1/chat/image", {
           method: "POST",
           signal: abortController.signal,
           body: formData,
         });
-      } else {
-        data = await api("/api/v1/chat", {
-          method: "POST",
-          signal: abortController.signal,
-          body: JSON.stringify({
-            prompt: promptToSend,
-            messages: conversationToSend,
-            responseMode,
-            answerStyle,
-            chatMode,
-            coderTask: chatMode === "coder" ? coderTask : null,
-            conversationId: activeConversationId,
-          }),
-        });
-      }
-      setMessages((current) => [
-        ...current.map((item) =>
-          item.id === userMessage.id ? { ...item, usage: data.usage } : item
-        ),
-        {
-          id: `assistant-${Date.now()}`,
-          role: "assistant",
-          content: data.response || "No response was returned.",
-          usage: data.usage,
-        },
-      ]);
-      onUsageRefresh?.();
-      window.dispatchEvent(new Event("next-ai:chats-changed"));
-      // setSelectionMessage(`Response from ${data.provider}`);
-      if (imageToSend) {
+        setMessages((current) => [
+          ...current.map((item) =>
+            item.id === userMessage.id ? { ...item, usage: data.usage } : item
+          ),
+          {
+            id: `assistant-${Date.now()}`,
+            role: "assistant",
+            content: data.response || "No response was returned.",
+            usage: data.usage,
+          },
+        ]);
+        onUsageRefresh?.();
+        window.dispatchEvent(new Event("next-ai:chats-changed"));
         setSelectionMessage("Image analyzed by NeXT Vision");
       } else {
+        // Progressive response: the assistant message is created empty and
+        // grown in place as chunks arrive from the streaming endpoint,
+        // instead of waiting for the full answer before showing anything.
+        const assistantMessageId = `assistant-${Date.now()}`;
+        let assistantAdded = false;
+        let streamUsage = null;
+        let streamErrorMessage = null;
+
+        await apiStream(
+          "/api/v1/chat",
+          {
+            method: "POST",
+            signal: abortController.signal,
+            body: JSON.stringify({
+              prompt: promptToSend,
+              messages: conversationToSend,
+              responseMode,
+              answerStyle,
+              chatMode,
+              coderTask: chatMode === "coder" ? coderTask : null,
+              conversationId: activeConversationId,
+            }),
+          },
+          {
+            onDelta: (text) => {
+              setHasStreamStarted(true);
+              setMessages((current) => {
+                if (!assistantAdded) {
+                  assistantAdded = true;
+                  return [
+                    ...current,
+                    {
+                      id: assistantMessageId,
+                      role: "assistant",
+                      content: text,
+                      usage: null,
+                    },
+                  ];
+                }
+                return current.map((item) =>
+                  item.id === assistantMessageId
+                    ? { ...item, content: item.content + text }
+                    : item
+                );
+              });
+            },
+            onDone: (payload) => {
+              streamUsage = payload.usage ?? null;
+            },
+            onError: (errorMessage) => {
+              streamErrorMessage = errorMessage;
+            },
+          }
+        );
+
+        if (streamErrorMessage && !assistantAdded) {
+          throw new Error(streamErrorMessage);
+        }
+
+        setMessages((current) =>
+          current.map((item) =>
+            item.id === userMessage.id || item.id === assistantMessageId
+              ? { ...item, usage: streamUsage }
+              : item
+          )
+        );
+
+        if (streamErrorMessage && assistantAdded) {
+          setMessages((current) => [
+            ...current,
+            {
+              id: `error-${Date.now()}`,
+              role: "assistant",
+              content: "The response was interrupted. Please try again.",
+              isError: true,
+            },
+          ]);
+        }
+
+        onUsageRefresh?.();
+        window.dispatchEvent(new Event("next-ai:chats-changed"));
         const selectedModelName =
           models.find((model) => model.id === selectedModelRef.current)
             ?.displayName || "Auto";
@@ -596,7 +661,7 @@ export default function AIMatchmaker({
           onRegenerate={prepareRegeneration}
           onRetry={restorePromptForRetry}
         />
-        {isResponding && (
+        {isResponding && !hasStreamStarted && (
           <div
             className="ai_match_maker__thinking"
             role="status"
