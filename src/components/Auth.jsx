@@ -7,6 +7,20 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [guestPending, setGuestPending] = useState(false);
+  const continueAsGuest = async () => {
+    if (pending || guestPending) return;
+    setGuestPending(true);
+    setErrorMessage("");
+    try {
+      const data = await api("/api/v1/auth/guest", { method: "POST" });
+      onLogin(data.user, data.token);
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setGuestPending(false);
+    }
+  };
   const submit = async (event) => {
     event?.preventDefault();
     if (pending) return;
@@ -112,6 +126,14 @@ export default function Auth({ onLogin, errorMessage, setErrorMessage }) {
                 : "Create an account"}
             </button>
           </small>
+          <button
+            className="auth-guest"
+            type="button"
+            onClick={continueAsGuest}
+            disabled={pending || guestPending}
+          >
+            {guestPending ? "Starting guest session…" : "Continue as guest"}
+          </button>
         </form>
       </div>
       <span className="auth-note">

@@ -21,7 +21,7 @@ export default function Sidebar({
 }) {
   const items = [
     ["recommend", Home, "Recommend"],
-    ["history", History, "History"],
+    ...(user.isGuest ? [] : [["history", History, "History"]]),
     ["models", Settings2, "My models"],
     ["ranking", Trophy, "Ranking"],
     ["skills", Sparkles, "Skills"],
@@ -49,6 +49,7 @@ export default function Sidebar({
         </span>
         <span>
           <b>{user.name}</b>
+          {user.isGuest && <small>Guest session · sign up to save history</small>}
         </span>
         {/* <ChevronDown size={15} /> */}
       </div>

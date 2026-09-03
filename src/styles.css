@@ -2515,6 +2515,27 @@ textarea:focus {
   font-size: 11px;
   margin-top: 22px;
 }
+.auth-guest {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 11px;
+  border: 1px solid #edeaf3;
+  border-radius: 8px;
+  background: #fff;
+  color: #625a70;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.auth-guest:hover {
+  border-color: #cfc7e8;
+  color: #28233a;
+}
+.auth-guest:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
 .auth-foot button {
   border: 0;
   background: none;
